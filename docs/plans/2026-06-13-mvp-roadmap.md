@@ -5,8 +5,8 @@
 
 | # | マイルストーン | スコープ（要件定義書の対応節） | 計画書 | 状態 |
 |---|--------------|------------------------------|--------|------|
-| M1 | 基盤＋認証 | プロジェクト雛形 / テスト基盤 / 定数・型 / DB スキーマ+RLS+関数 / Supabase クライアント / proxy.ts / 認証一式（3.1, 4, 6.1, 7） | `2026-06-13-m1-foundation-auth.md` | 進行中 |
-| M2 | ページ管理 | pages Server Actions（CRUD/移動/並べ替え/ごみ箱）/ サイドバーツリー / `/pages` `/pages/[id]`枠 / `/trash`（3.2, 5.1, 6.2） | M1 完了後に作成 | 未着手 |
+| M1 | 基盤＋認証 | プロジェクト雛形 / テスト基盤 / 定数・型 / DB スキーマ+RLS+関数 / Supabase クライアント / proxy.ts / 認証一式（3.1, 4, 6.1, 7） | `2026-06-13-m1-foundation-auth.md` | **完了（2026-06-13）** |
+| M2 | ページ管理 | pages Server Actions（CRUD/移動/並べ替え/ごみ箱）/ サイドバーツリー / `/pages` `/pages/[id]`枠 / `/trash`（3.2, 5.1, 6.2） | M1 完了後に作成 | 次に着手 |
 | M3 | エディタ＋画像 | BlockNote エディタ / 自動保存 / 画像圧縮＋アップロード（3.3, 5.2） | M2 完了後に作成 | 未着手 |
 | M4 | AI（BYOK） | key-storage / providers（gemini, anthropic, openai）/ prompts / consumeAiUsage / `/api/ai/proxy` / AI メニュー＋サイドパネル / `/settings/ai`（3.4, 5.3, 5.6） | M3 完了後に作成 | 未着手 |
 | M5 | 設定・公開・運用 | 設定残り（profile/usage/account/外観）/ LP・help・法務 / cron cleanup-trash / `/api/health` / SEO・noindex / アクセシビリティ / E2E 全 spec 完備（3.5, 3.11, 3.12, 5.4, 5.7, 6.4） | M4 完了後に作成 | 未着手 |

@@ -12,7 +12,9 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul',
       include: ['lib/**', 'types/**', 'components/**', 'hooks/**'],
-      exclude: ['components/ui/**', 'types/database.ts'],
+      // components/ui = shadcn 生成物 / database.ts = 自動生成 /
+      // lib/supabase = Next.js ランタイム（cookies/Edge）接着層で単体テスト不能。E2E が検証する
+      exclude: ['components/ui/**', 'types/database.ts', 'lib/supabase/**'],
       thresholds: { branches: 80, functions: 85, lines: 85, statements: 85 },
     },
   },
