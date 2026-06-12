@@ -1,0 +1,4 @@
+interface:
+  display_name: "Notea Rules"
+  short_description: "Load Claude project rules on demand"
+  default_prompt: "Use $notea-rules for this Notea coding task."
