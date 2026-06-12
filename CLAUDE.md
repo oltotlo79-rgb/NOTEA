@@ -11,7 +11,7 @@ Notea — Notion 風メモ・ドキュメント作成 Web アプリ。
 ## 開発コマンド
 
 ```bash
-npm run dev      # 開発サーバー起動 (http://localhost:3000)
+npm run dev      # 開発サーバー起動 (http://localhost:3010 — 3000 は他プロジェクトが使用)
 npm run build    # 本番ビルド
 npm run start    # 本番サーバー起動
 npm run lint     # ESLint実行
