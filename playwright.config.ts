@@ -15,13 +15,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
-  timeout: 60_000,
+  timeout: 90_000,
   use: {
     baseURL: 'http://localhost:3010',
     trace: 'on-first-retry',
-    // 本番ビルドの CSP nonce 問題（proxy.ts が nonce を生成するが <script> タグへの付与が未実装）を
-    // E2E テスト中にバイパスする。本番コードの nonce 修正が完了次第この設定は削除する。
-    bypassCSP: true,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

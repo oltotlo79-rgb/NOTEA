@@ -49,23 +49,35 @@ export async function login(page: Page) {
  *
  * 既に /pages/[uuid] にいる場合は waitForURL が即座に resolve してしまうため、
  * 現在の URL を記録してから「異なる /pages/[id]」への変化を waitForFunction でポーリングする。
+ *
+ * Server Action → revalidatePath → router.push の完了を確実に捕捉するため、
+ * クリック前に networkidle で pending fetch を全て終わらせてからボタンを押す。
+ * クリック後も waitForURL を atomic に仕掛けてから click するパターンで
+ * navigation を取り逃がさないようにする。
  */
 export async function createPage(page: Page): Promise<string> {
   const createBtn = page.getByRole('button', { name: '新規ページを作成' })
   await expect(createBtn).toBeEnabled({ timeout: 10000 })
 
-  const currentUrl = page.url()
-  await createBtn.click()
+  // クリック前に pending な fetch/revalidation を全て終わらせて安定させる。
+  // Server Action 完了直後に router.push が呼ばれるため、前の操作が残っていると
+  // waitForFunction が URL 変化を取り逃がす場合がある。
+  await page.waitForLoadState('networkidle').catch(() => {})
+  await expect(createBtn).toBeEnabled({ timeout: 5000 })
 
-  // 現在 URL と異なる /pages/[uuid] に変わるまでポーリングする
-  await page.waitForFunction(
-    (current) => {
-      const p = window.location.pathname
-      return p.match(/\/pages\/[0-9a-f-]+/) && window.location.href !== current
-    },
-    currentUrl,
-    { timeout: 90000 }
-  )
+  const currentUrl = page.url()
+
+  // waitForURL を先に仕掛けてから click する atomic パターン。
+  // click() の後から waitForURL を登録すると navigation 完了を取り逃がす場合がある。
+  // router.push() + router.refresh() の二段階 navigation で 'load' が遅延するため
+  // URL 変化の commit のみを待ち、その後 networkidle で安定させる
+  await Promise.all([
+    createBtn.click(),
+    page.waitForURL(
+      (url) => /\/pages\/[0-9a-f-]+/.test(url.pathname) && url.href !== currentUrl,
+      { timeout: 60000, waitUntil: 'commit' }
+    ),
+  ])
   await page.waitForLoadState('networkidle').catch(() => {})
   const id = page.url().match(/\/pages\/([0-9a-f-]+)/)?.[1]
   if (!id) throw new Error(`createPage: could not extract page id from URL: ${page.url()}`)

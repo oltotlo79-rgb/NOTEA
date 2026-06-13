@@ -2,6 +2,10 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/lib/constants/routes'
 
+// 本番 CSP nonce が per-request で変わるため、静的プリレンダではスクリプトがブロックされる。
+// force-dynamic でランタイムレンダリングに固定し、proxy が付与する nonce を script に適用させる。
+export const dynamic = 'force-dynamic'
+
 export default function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
