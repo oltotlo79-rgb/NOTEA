@@ -73,11 +73,25 @@ export function createMockSupabaseClient(options: MockSupabaseOptions = {}) {
     reject: (reason: unknown) => unknown
   ) => Promise.resolve(defaultResult.current).then(resolve, reject)
 
-  // Storage モック: list/remove を per-call override 可能にする
+  // Storage モック: list/remove/createSignedUploadUrl を per-call override 可能にする
+  // vi.fn の型引数を明示して mockResolvedValueOnce の型検査が通るようにする
+  type StorageFileEntry = { name: string; metadata?: Record<string, unknown> | null }
+  type StorageListResult = { data: StorageFileEntry[] | null; error: { message: string } | null }
+  type StorageRemoveResult = { data: unknown; error: { message: string } | null }
+  type StorageUploadResult = { data: unknown; error: { message: string } | null }
+  type StorageSignedUploadResult = {
+    data: { path: string; token: string; signedUrl: string } | null
+    error: { message: string } | null
+  }
+
   const storageBucketBuilder = {
-    list: vi.fn(async () => ({ data: [], error: null })),
-    remove: vi.fn(async () => ({ data: null, error: null })),
-    upload: vi.fn(async () => ({ data: null, error: null })),
+    list: vi.fn<() => Promise<StorageListResult>>(async () => ({ data: [], error: null })),
+    remove: vi.fn<() => Promise<StorageRemoveResult>>(async () => ({ data: null, error: null })),
+    upload: vi.fn<() => Promise<StorageUploadResult>>(async () => ({ data: null, error: null })),
+    createSignedUploadUrl: vi.fn<() => Promise<StorageSignedUploadResult>>(async () => ({
+      data: { path: 'user-1/page-1/uuid.webp', token: 'signed-token', signedUrl: 'https://example.com/upload' },
+      error: null,
+    })),
   }
   const storageMock = {
     from: vi.fn(() => storageBucketBuilder),

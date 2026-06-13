@@ -12,3 +12,9 @@ export const ERR_PAGE_NOT_FOUND = 'ページが見つかりません'
 export const ERR_PAGE_CONTENT_TOO_LARGE = 'ページの内容が大きすぎます（上限1MB）'
 export const ERR_PAGE_CIRCULAR = 'ページを自身の子孫の下へは移動できません'
 export const ERR_PAGE_DEPTH_LIMIT = 'ページの階層が深すぎます（最大10階層）'
+export const ERR_STORAGE_LIMIT_REACHED = (limitLabel: string) =>
+  `ストレージ容量の上限（${limitLabel}）に達しました。不要な画像を削除するか、プレミアムプランをご検討ください`
+export const ERR_INVALID_IMAGE_TYPE = '画像は WebP 形式のみアップロードできます'
+export const ERR_IMAGE_TOO_LARGE = (maxMb: number) =>
+  `画像サイズが上限（${maxMb}MB）を超えています`
+export const ERR_IMAGE_PATH_FORBIDDEN = '他のユーザーの画像は削除できません'
