@@ -6,8 +6,8 @@
 | # | マイルストーン | スコープ（要件定義書の対応節） | 計画書 | 状態 |
 |---|--------------|------------------------------|--------|------|
 | M1 | 基盤＋認証 | プロジェクト雛形 / テスト基盤 / 定数・型 / DB スキーマ+RLS+関数 / Supabase クライアント / proxy.ts / 認証一式（3.1, 4, 6.1, 7） | `2026-06-13-m1-foundation-auth.md` | **完了（2026-06-13）** |
-| M2 | ページ管理 | pages Server Actions（CRUD/移動/並べ替え/ごみ箱）/ サイドバーツリー / `/pages` `/pages/[id]`枠 / `/trash`（3.2, 5.1, 6.2） | M1 完了後に作成 | 次に着手 |
-| M3 | エディタ＋画像 | BlockNote エディタ / 自動保存 / 画像圧縮＋アップロード（3.3, 5.2） | M2 完了後に作成 | 未着手 |
+| M2 | ページ管理 | pages Server Actions（CRUD/移動/並べ替え/ごみ箱）/ サイドバーツリー / `/pages` `/pages/[id]`枠 / `/trash`（3.2, 5.1, 6.2） | `2026-06-13-m2-pages.md` | **完了（2026-06-13）** ※下記 CSP 課題は別途 |
+| M3 | エディタ＋画像 | BlockNote エディタ / 自動保存 / 画像圧縮＋アップロード（3.3, 5.2） | M2 完了後に作成 | 次に着手 |
 | M4 | AI（BYOK） | key-storage / providers（gemini, anthropic, openai）/ prompts / consumeAiUsage / `/api/ai/proxy` / AI メニュー＋サイドパネル / `/settings/ai`（3.4, 5.3, 5.6） | M3 完了後に作成 | 未着手 |
 | M5 | 設定・公開・運用 | 設定残り（profile/usage/account/外観）/ LP・help・法務 / cron cleanup-trash / `/api/health` / SEO・noindex / アクセシビリティ / E2E 全 spec 完備（3.5, 3.11, 3.12, 5.4, 5.7, 6.4） | M4 完了後に作成 | 未着手 |
 
@@ -21,6 +21,12 @@ M1 (基盤+認証) → M2 (ページ管理) → M3 (エディタ+画像) → M4 
   （後続マイルストーンでスキーマ変更を発生させないため）
 - CI は M1 で構築し、以降のマイルストーンは常にグリーンを維持して進める
 - カバレッジ閾値（branches 80% / functions・lines・statements 85%）は M1 から有効
+
+## 未解決の技術課題（マイルストーン横断）
+
+| 課題 | 内容 | 顕在化 | 対応予定 |
+|------|------|--------|---------|
+| CSP nonce が静的ページで無効 | `proxy.ts` が本番で `script-src 'nonce-… strict-dynamic'` を出すが、静的プリレンダされた公開ページ（/, /login 等）のスクリプトに nonce が付与されずブロックされる（Next.js の静的生成と per-request nonce の非互換）。dev は緩い CSP のため M1 では露見せず、M2 の本番ビルド E2E で発覚。現状 E2E は `bypassCSP: true` で暫定回避。**本番デプロイ（M5）を壊すため、それまでに方針決定＋修正が必要。** | M2 | 方針決定待ち（nonce+動的化 / unsafe-inline / M5 保留） |
 
 ## 第2弾以降（このロードマップ外）
 
