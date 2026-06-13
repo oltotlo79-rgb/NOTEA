@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MAX_PAGE_TITLE_LENGTH } from '@/lib/constants/limits'
+import { MAX_PAGE_ICON_LENGTH, MAX_PAGE_TITLE_LENGTH } from '@/lib/constants/limits'
 
 const uuid = z.uuid()
 
@@ -14,7 +14,7 @@ export const updateMetaSchema = z
   .object({
     id: uuid,
     title: z.string().max(MAX_PAGE_TITLE_LENGTH).optional(),
-    icon: z.string().max(8).nullable().optional(),
+    icon: z.string().max(MAX_PAGE_ICON_LENGTH).nullable().optional(),
   })
   .refine((d) => d.title !== undefined || d.icon !== undefined, {
     error: '更新する項目がありません',

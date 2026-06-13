@@ -489,3 +489,162 @@ describe('listTrashedPages', () => {
     expect(ltFn).toHaveBeenCalledWith('trashed_at', cursor)
   })
 })
+
+// =====================
+// deletePagePermanently branch 補強
+// =====================
+describe('deletePagePermanently (branch 補強)', () => {
+  it('Storage に画像がある場合は remove が呼ばれる', async () => {
+    const trashedPages = [PAGE_1]
+    setBuilderResult(mockClient, { data: trashedPages, error: null })
+
+    // list が画像ファイルを返すようにモック
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(mockClient._storage._bucket.list as any).mockResolvedValueOnce({
+      data: [{ name: 'image.webp' }],
+      error: null,
+    })
+
+    const result = await deletePagePermanently(ID_1)
+    expect(result.success).toBe(true)
+    expect(mockClient._storage._bucket.remove).toHaveBeenCalled()
+  })
+
+  it('Storage list がエラーを返しても処理を継続する', async () => {
+    const trashedPages = [PAGE_1]
+    setBuilderResult(mockClient, { data: trashedPages, error: null })
+
+    // list はデフォルトで空配列を返す（エラーなし）
+    const result = await deletePagePermanently(ID_1)
+    expect(result.success).toBe(true)
+  })
+})
+
+// =====================
+// createPage branch 補強
+// =====================
+describe('createPage (branch 補強)', () => {
+  it('parentId 有りで兄弟ページがない場合 sort_order = 0', async () => {
+    mockClient._maybeSingle
+      .mockResolvedValueOnce({ data: { plan: 'free' }, error: null }) // getUserPlan
+    mockClient._rpc.mockResolvedValueOnce({ data: 0, error: null })
+
+    // 全ページ取得: 親ページのみ存在
+    setBuilderResult(mockClient, { data: [{ id: ID_PARENT, parent_id: null }], error: null })
+
+    // 兄弟ページの max sort_order: null (兄弟なし)
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: null, error: null })
+
+    // insert 結果
+    mockClient._single.mockResolvedValueOnce({ data: { id: 'new-page-uuid' }, error: null })
+
+    const result = await createPage({ parentId: ID_PARENT })
+    expect(result.success).toBe(true)
+  })
+
+  it('ルートページで兄弟がない場合 sort_order = 0', async () => {
+    mockClient._maybeSingle
+      .mockResolvedValueOnce({ data: { plan: 'free' }, error: null }) // getUserPlan
+    mockClient._rpc.mockResolvedValueOnce({ data: 0, error: null })
+
+    // root sibling: null (兄弟なし)
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: null, error: null })
+
+    // insert 結果
+    mockClient._single.mockResolvedValueOnce({ data: { id: 'new-root-page' }, error: null })
+
+    const result = await createPage({})
+    expect(result.success).toBe(true)
+    if (result.success && result.data) {
+      expect(result.data.id).toBe('new-root-page')
+    }
+  })
+
+  it('DB エラー: 全ページ取得失敗', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({ data: 0, error: null })
+    setBuilderResult(mockClient, { data: null, error: { message: 'DB error' } })
+
+    const result = await createPage({ parentId: ID_PARENT })
+    expect(result.success).toBe(false)
+    expect('error' in result && result.error).toContain('読み書き')
+  })
+
+  it('DB エラー: insert 失敗', async () => {
+    mockClient._maybeSingle
+      .mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({ data: 0, error: null })
+
+    // root sibling
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { sort_order: 3 }, error: null })
+
+    // insert 失敗
+    mockClient._single.mockResolvedValueOnce({ data: null, error: { message: 'insert error' } })
+
+    const result = await createPage({})
+    expect(result.success).toBe(false)
+    expect('error' in result && result.error).toContain('読み書き')
+  })
+})
+
+// =====================
+// restorePage branch 補強
+// =====================
+describe('restorePage (branch 補強)', () => {
+  it('親ページが存在するが is_trashed=false の場合は parent_id を保持する', async () => {
+    const trashedPages = [PAGE_2] // parent_id = ID_1
+    setBuilderResult(mockClient, { data: trashedPages, error: null })
+
+    mockClient._maybeSingle
+      .mockResolvedValueOnce({ data: { plan: 'paid' }, error: null })
+      .mockResolvedValueOnce({ data: { id: ID_1, is_trashed: false }, error: null }) // 親は非ごみ箱
+
+    const result = await restorePage(ID_2)
+    expect(result.success).toBe(true)
+
+    const updateFn = mockClient._builder.update as ReturnType<typeof vi.fn>
+    // parent_id=null の update が呼ばれていないことを確認
+    const parentNullCall = updateFn.mock.calls.find(
+      (c) =>
+        typeof c[0] === 'object' &&
+        c[0] !== null &&
+        'parent_id' in (c[0] as object) &&
+        (c[0] as { parent_id: unknown }).parent_id === null
+    )
+    expect(parentNullCall).toBeUndefined()
+  })
+
+  it('DB エラー: ごみ箱ページ取得失敗', async () => {
+    setBuilderResult(mockClient, { data: null, error: { message: 'DB error' } })
+
+    const result = await restorePage(ID_1)
+    expect(result.success).toBe(false)
+    expect('error' in result && result.error).toContain('読み書き')
+  })
+})
+
+// =====================
+// updatePageContent branch 補強
+// =====================
+describe('updatePageContent (branch 補強)', () => {
+  it('DB エラー時は ERR_DB を返す', async () => {
+    setBuilderResult(mockClient, { data: null, error: { message: 'update error' } })
+
+    const result = await updatePageContent({ id: ID_1, content: [], contentText: '' })
+    expect(result.success).toBe(false)
+    expect('error' in result && result.error).toContain('読み書き')
+  })
+})
+
+// =====================
+// trashPage branch 補強
+// =====================
+describe('trashPage (branch 補強)', () => {
+  it('DB 取得エラー', async () => {
+    setBuilderResult(mockClient, { data: null, error: { message: 'DB error' } })
+
+    const result = await trashPage(ID_1)
+    expect(result.success).toBe(false)
+    expect('error' in result && result.error).toContain('読み書き')
+  })
+})

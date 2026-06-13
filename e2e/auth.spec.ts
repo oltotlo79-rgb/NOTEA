@@ -1,24 +1,24 @@
 import { expect, test } from '@playwright/test'
 import { clickAndWaitForUrl } from './helpers/navigation'
-
-// supabase/seed.sql で投入されるテストユーザー
-const E2E_EMAIL = 'e2e@example.com'
-const E2E_PASSWORD = 'Password123'
+import { E2E_EMAIL, login } from './helpers/auth'
 
 test('未認証で /pages にアクセスすると /login へリダイレクトされる', async ({ page }) => {
   await page.goto('/pages')
   await page.waitForURL(/\/login\?redirectTo=/)
-  await expect(page.getByLabel('メールアドレス')).toBeVisible()
+  await page.waitForLoadState('networkidle').catch(() => {})
+  await expect(page.getByLabel('メールアドレス')).toBeVisible({ timeout: 10000 })
 })
 
 test('ログイン → /pages 表示 → ログアウト', async ({ page }) => {
-  await page.goto('/login')
-  await page.waitForLoadState('networkidle').catch(() => {})
-  await page.getByLabel('メールアドレス').fill(E2E_EMAIL)
-  await page.getByLabel('パスワード').fill(E2E_PASSWORD)
-  await clickAndWaitForUrl(page, page.getByRole('button', { name: 'ログイン', exact: true }), /\/pages/)
+  await login(page)
   await expect(page.getByText(E2E_EMAIL)).toBeVisible()
-  await clickAndWaitForUrl(page, page.getByRole('button', { name: 'ログアウト' }), /\/login/)
+  const signOutBtn = page.getByRole('button', { name: 'ログアウト' })
+  await expect(signOutBtn).toBeEnabled({ timeout: 5000 })
+  // router.push + router.refresh の二段階 navigation で "load" が遅延するため
+  // URL 変化 (commit) を確認した後に networkidle で安定化を待つ
+  await clickAndWaitForUrl(page, signOutBtn, /\/login/, { waitUntil: 'commit' })
+  await page.waitForLoadState('networkidle').catch(() => {})
+  await expect(page.getByLabel('メールアドレス')).toBeVisible({ timeout: 10000 })
 })
 
 test('誤ったパスワードでエラーが表示される', async ({ page }) => {
@@ -45,11 +45,7 @@ test('新規登録すると確認メール案内ページが表示される', as
 })
 
 test('ログイン済みで /login にアクセスすると /pages へリダイレクトされる', async ({ page }) => {
-  await page.goto('/login')
-  await page.waitForLoadState('networkidle').catch(() => {})
-  await page.getByLabel('メールアドレス').fill(E2E_EMAIL)
-  await page.getByLabel('パスワード').fill(E2E_PASSWORD)
-  await clickAndWaitForUrl(page, page.getByRole('button', { name: 'ログイン', exact: true }), /\/pages/)
+  await login(page)
   await page.goto('/login')
   await page.waitForURL(/\/pages/)
 })

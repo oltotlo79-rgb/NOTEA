@@ -1,20 +1,25 @@
+import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { SignOutButton } from '@/components/auth/SignOutButton'
-import { createClient } from '@/lib/supabase/server'
+import { getMostRecentPageId } from '@/lib/queries/pages'
+import { CreateFirstPageButton } from '@/components/page/CreateFirstPageButton'
+import { ROUTES } from '@/lib/constants/routes'
 
-export const metadata: Metadata = { title: 'ページ | Notea', robots: { index: false } }
+export const metadata: Metadata = {
+  title: 'ページ | Notea',
+  robots: { index: false },
+}
 
 export default async function PagesHomePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const recentId = await getMostRecentPageId()
+
+  if (recentId) {
+    redirect(`${ROUTES.PAGES}/${recentId}`)
+  }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <p className="text-sm text-muted-foreground">{user?.email} でログイン中</p>
-      <p>まだページがありません</p>
-      <SignOutButton />
-    </main>
+    <div className="flex flex-col items-center justify-center h-full gap-4 py-16">
+      <p className="text-muted-foreground text-sm">まだページがありません</p>
+      <CreateFirstPageButton />
+    </div>
   )
 }
