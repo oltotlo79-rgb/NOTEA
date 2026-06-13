@@ -12,11 +12,16 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul',
       include: ['lib/**', 'types/**', 'components/**', 'hooks/**'],
-      // components/ui = shadcn 生成物 / database.ts = 自動生成 /
-      // lib/supabase = Next.js ランタイム（cookies/Edge）接着層で単体テスト不能。E2E が検証する
-      exclude: ['components/ui/**', 'types/database.ts', 'lib/supabase/**'],
+      // components/ui = shadcn 生成物 / database.ts = 自動生成
+      exclude: ['components/ui/**', 'types/database.ts'],
       thresholds: { branches: 80, functions: 85, lines: 85, statements: 85 },
     },
   },
-  resolve: { alias: { '@': path.resolve(__dirname, '.') } },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, '.'),
+      // `import 'server-only'` を含むモジュールを vitest jsdom 環境から import 可能にするスタブ
+      'server-only': path.resolve(__dirname, '__tests__/stubs/server-only.ts'),
+    },
+  },
 })
