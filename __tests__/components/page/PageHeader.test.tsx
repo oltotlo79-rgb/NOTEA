@@ -101,4 +101,25 @@ describe('PageHeader', () => {
     expect(screen.queryByPlaceholderText('絵文字を入力')).not.toBeInTheDocument()
     expect(updatePageMeta).not.toHaveBeenCalled()
   })
+
+  it('Enter キーで onEnterPress コールバックが呼ばれる', async () => {
+    const user = userEvent.setup()
+    const onEnterPress = vi.fn()
+    renderWithQuery(<PageHeader pageId={PAGE_ID} title="タイトル" icon={null} onEnterPress={onEnterPress} />)
+
+    const input = screen.getByDisplayValue('タイトル')
+    await user.click(input)
+    await user.keyboard('{Enter}')
+
+    expect(onEnterPress).toHaveBeenCalledOnce()
+  })
+
+  it('onEnterPress が未指定でも Enter キーでエラーにならない', async () => {
+    const user = userEvent.setup()
+    renderWithQuery(<PageHeader pageId={PAGE_ID} title="タイトル" icon={null} />)
+
+    const input = screen.getByDisplayValue('タイトル')
+    await user.click(input)
+    await expect(user.keyboard('{Enter}')).resolves.not.toThrow()
+  })
 })

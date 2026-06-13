@@ -97,4 +97,15 @@ describe('AppShell', () => {
     // 折りたたみ後: 幅 0px
     expect(aside?.style.width).toBe('0px')
   })
+
+  it('idle 状態では autosave-status が表示されない', () => {
+    render(
+      <AppShell userEmail="test@example.com">
+        <div>コンテンツ</div>
+      </AppShell>,
+      { wrapper: makeWrapper() }
+    )
+    // idle では AutoSaveStatus が null を返す
+    expect(screen.queryByTestId('autosave-status')).not.toBeInTheDocument()
+  })
 })

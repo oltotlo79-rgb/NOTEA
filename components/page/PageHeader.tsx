@@ -9,9 +9,10 @@ type PageHeaderProps = {
   pageId: string
   title: string
   icon: string | null
+  onEnterPress?: () => void
 }
 
-export function PageHeader({ pageId, title: initialTitle, icon: initialIcon }: PageHeaderProps) {
+export function PageHeader({ pageId, title: initialTitle, icon: initialIcon, onEnterPress }: PageHeaderProps) {
   const queryClient = useQueryClient()
   const [title, setTitle] = useState(initialTitle)
   const [icon, setIcon] = useState(initialIcon)
@@ -30,6 +31,7 @@ export function PageHeader({ pageId, title: initialTitle, icon: initialIcon }: P
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.currentTarget.blur()
+      onEnterPress?.()
     }
   }
 

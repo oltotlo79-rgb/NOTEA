@@ -5,6 +5,12 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/actions/pages', () => ({
   updatePageMeta: vi.fn().mockResolvedValue({ success: true }),
+  updatePageContent: vi.fn().mockResolvedValue({ success: true }),
+}))
+
+// EditorDynamic は next/dynamic（ssr:false）を使うため jsdom では EditorSkeleton のみ描画する
+vi.mock('@/components/editor/EditorDynamic', () => ({
+  EditorDynamic: () => <div aria-label="エディタ読み込み中" data-testid="editor-dynamic-stub" />,
 }))
 
 const { PageView } = await import('@/components/page/PageView')
@@ -31,8 +37,8 @@ describe('PageView', () => {
     expect(screen.getByDisplayValue('テストページ')).toBeInTheDocument()
   })
 
-  it('エディタのプレースホルダーテキストを表示する', () => {
+  it('EditorDynamic コンポーネントを描画する（BlockNote はスタブ）', () => {
     renderWithQuery(<PageView page={PAGE_DETAIL} />)
-    expect(screen.getByText('エディタは次のアップデートで利用可能になります')).toBeInTheDocument()
+    expect(screen.getByTestId('editor-dynamic-stub')).toBeInTheDocument()
   })
 })

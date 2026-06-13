@@ -67,17 +67,19 @@ export async function createPage(page: Page): Promise<string> {
 
   const currentUrl = page.url()
 
-  // waitForURL を先に仕掛けてから click する atomic パターン。
-  // click() の後から waitForURL を登録すると navigation 完了を取り逃がす場合がある。
-  // router.push() + router.refresh() の二段階 navigation で 'load' が遅延するため
-  // URL 変化の commit のみを待ち、その後 networkidle で安定させる
-  await Promise.all([
-    createBtn.click(),
-    page.waitForURL(
-      (url) => /\/pages\/[0-9a-f-]+/.test(url.pathname) && url.href !== currentUrl,
-      { timeout: 60000, waitUntil: 'commit' }
-    ),
-  ])
+  // クリック後に「現在の URL と異なる /pages/[id]」へ遷移するのを waitForFunction で待つ。
+  // waitForURL + click の atomic パターンは Next.js router.push() + router.refresh() の
+  // 二段階 navigation で waitUntil の段階を取り逃がすことがあるため、
+  // DOM polling (waitForFunction) で安定させる。
+  await createBtn.click()
+  await page.waitForFunction(
+    (current) => {
+      const p = window.location.pathname
+      return /\/pages\/[0-9a-f-]+/.test(p) && window.location.href !== current
+    },
+    currentUrl,
+    { timeout: 60000 }
+  )
   await page.waitForLoadState('networkidle').catch(() => {})
   const id = page.url().match(/\/pages\/([0-9a-f-]+)/)?.[1]
   if (!id) throw new Error(`createPage: could not extract page id from URL: ${page.url()}`)
@@ -94,8 +96,13 @@ export async function createPageWithTitle(page: Page, title: string): Promise<st
   await titleInput.fill(title)
   await titleInput.press('Tab')
 
-  // タイトルが sidebar に反映されるまで待つ（autosave + re-fetch 完了）
-  // .first() でルートアナウンサー (role=alert) との strict mode 違反を回避する
-  await expect(page.getByText(title).first()).toBeVisible({ timeout: 8000 })
+  // Tab 後にタイトル保存 Action が走り revalidatePath → router.refresh が完了するのを待つ。
+  // editor クラッシュが解消された M3 以降、エディタ hydration も含めて完了を待つ。
+  await page.waitForLoadState('networkidle').catch(() => {})
+
+  // サイドバー反映を待つ（autosave + re-fetch 完了）。
+  // .first() でルートアナウンサー (role=alert) や span との strict mode 違反を回避する。
+  // タイムアウトは router.refresh + revalidation の完了まで余裕を持たせる。
+  await expect(page.getByText(title).first()).toBeVisible({ timeout: 25000 })
   return id
 }

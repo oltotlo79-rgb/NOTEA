@@ -6,6 +6,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Sidebar } from '@/components/sidebar/Sidebar'
 import { useSidebarState } from '@/hooks/use-sidebar-state'
 import { cn } from '@/lib/utils'
+import { AutoSaveProvider, useAutoSaveContext } from '@/components/editor/AutoSaveContext'
+import { AutoSaveStatus } from '@/components/editor/AutoSaveStatus'
 
 const SIDEBAR_WIDTH = 260
 
@@ -14,8 +16,9 @@ type AppShellProps = {
   userEmail: string | undefined
 }
 
-export function AppShell({ children, userEmail }: AppShellProps) {
+function AppShellInner({ children, userEmail }: AppShellProps) {
   const { isSidebarCollapsed, toggleSidebar } = useSidebarState()
+  const autoSaveCtx = useAutoSaveContext()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -65,6 +68,13 @@ export function AppShell({ children, userEmail }: AppShellProps) {
               <Sidebar userEmail={userEmail} />
             </SheetContent>
           </Sheet>
+
+          {/* 右端: 自動保存ステータス（エディタページでのみ表示） */}
+          <div className="ml-auto">
+            {autoSaveCtx && (
+              <AutoSaveStatus status={autoSaveCtx.status} onRetry={autoSaveCtx.onRetry} />
+            )}
+          </div>
         </header>
 
         <main className="flex-1 overflow-auto">
@@ -72,5 +82,13 @@ export function AppShell({ children, userEmail }: AppShellProps) {
         </main>
       </div>
     </div>
+  )
+}
+
+export function AppShell({ children, userEmail }: AppShellProps) {
+  return (
+    <AutoSaveProvider>
+      <AppShellInner userEmail={userEmail}>{children}</AppShellInner>
+    </AutoSaveProvider>
   )
 }
