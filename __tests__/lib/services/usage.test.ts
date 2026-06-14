@@ -7,7 +7,9 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => mockClient,
 }))
 
-const { getStorageUsage } = await import('@/lib/services/usage')
+const { getStorageUsage, consumeAiUsage, getAiUsageToday } = await import(
+  '@/lib/services/usage'
+)
 
 const USER_ID = 'a0000001-0000-4000-8000-000000000001'
 const FREE_LIMIT_BYTES = 200 * 1024 * 1024
@@ -121,5 +123,191 @@ describe('getStorageUsage', () => {
     const result = await getStorageUsage(USER_ID)
 
     expect(result.limitBytes).toBe(FREE_LIMIT_BYTES)
+  })
+})
+
+// =====================
+// consumeAiUsage
+// =====================
+describe('consumeAiUsage', () => {
+  it('正常系(無料・gemini): remaining を返す', async () => {
+    // getUserPlan: free
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    // rpc consume_ai_usage: 消費後 count=1 を返す
+    mockClient._rpc.mockResolvedValueOnce({ data: 1, error: null })
+
+    const result = await consumeAiUsage(USER_ID, 'gemini')
+
+    expect('code' in result).toBe(false)
+    if (!('code' in result)) {
+      expect(result.remaining).toBe(4) // 5 - 1 = 4
+    }
+  })
+
+  it('無料プランで openai を指定すると PROVIDER_NOT_ALLOWED', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+
+    const result = await consumeAiUsage(USER_ID, 'openai')
+
+    expect('code' in result).toBe(true)
+    if ('code' in result) {
+      expect(result.code).toBe('PROVIDER_NOT_ALLOWED')
+    }
+  })
+
+  it('無料プランで anthropic を指定すると PROVIDER_NOT_ALLOWED', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+
+    const result = await consumeAiUsage(USER_ID, 'anthropic')
+
+    expect('code' in result).toBe(true)
+    if ('code' in result) {
+      expect(result.code).toBe('PROVIDER_NOT_ALLOWED')
+    }
+  })
+
+  it('有料プランは openai も anthropic も消費できる', async () => {
+    // openai
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'paid' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({ data: 1, error: null })
+
+    const openaiResult = await consumeAiUsage(USER_ID, 'openai')
+    expect('code' in openaiResult).toBe(false)
+    if (!('code' in openaiResult)) {
+      expect(openaiResult.remaining).toBe(99) // 100 - 1
+    }
+
+    // anthropic
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'paid' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({ data: 1, error: null })
+
+    const anthropicResult = await consumeAiUsage(USER_ID, 'anthropic')
+    expect('code' in anthropicResult).toBe(false)
+  })
+
+  it('上限ちょうど（5回目）は成功し remaining=0', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({ data: 5, error: null })
+
+    const result = await consumeAiUsage(USER_ID, 'gemini')
+
+    expect('code' in result).toBe(false)
+    if (!('code' in result)) {
+      expect(result.remaining).toBe(0)
+    }
+  })
+
+  it('上限超過は LIMIT_EXCEEDED（rpc がエラーを返す）', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'AI_LIMIT_EXCEEDED: daily limit reached' },
+    })
+
+    const result = await consumeAiUsage(USER_ID, 'gemini')
+
+    expect('code' in result).toBe(true)
+    if ('code' in result) {
+      expect(result.code).toBe('LIMIT_EXCEEDED')
+      expect(result.message).toContain('5')
+    }
+  })
+
+  it('有料プランの上限は 100 回', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'paid' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'AI_LIMIT_EXCEEDED: daily limit reached' },
+    })
+
+    const result = await consumeAiUsage(USER_ID, 'openai')
+
+    expect('code' in result).toBe(true)
+    if ('code' in result) {
+      expect(result.code).toBe('LIMIT_EXCEEDED')
+      expect(result.message).toContain('100')
+    }
+  })
+
+  it('rpc が AI_LIMIT_EXCEEDED 以外のエラーを返すと DB_ERROR', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'connection timeout' },
+    })
+
+    const result = await consumeAiUsage(USER_ID, 'gemini')
+
+    expect('code' in result).toBe(true)
+    if ('code' in result) {
+      expect(result.code).toBe('DB_ERROR')
+    }
+  })
+
+  it('consumeAiUsage の引数に apiKey が存在しない（型レベル検証）', () => {
+    // @ts-expect-error -- consumeAiUsage は provider のみを受け取る。apiKey は存在しない
+    void consumeAiUsage(USER_ID, 'gemini', { apiKey: 'sk-secret' })
+  })
+})
+
+// =====================
+// getAiUsageToday
+// =====================
+describe('getAiUsageToday', () => {
+  it('正常系(無料): provider 別の count と残回数を返す', async () => {
+    // getUserPlan
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    // ai_usage 取得: gemini 2回使用
+    mockClient._defaultResult.current = {
+      data: [{ provider: 'gemini', count: 2 }],
+      error: null,
+    }
+
+    const result = await getAiUsageToday(USER_ID)
+
+    expect(result.plan).toBe('free')
+    const gemini = result.providers.find((p) => p.provider === 'gemini')
+    expect(gemini?.count).toBe(2)
+    expect(gemini?.remaining).toBe(3) // 5 - 2
+    expect(gemini?.limit).toBe(5)
+  })
+
+  it('正常系(有料): 上限は 100 回', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'paid' }, error: null })
+    mockClient._defaultResult.current = {
+      data: [{ provider: 'openai', count: 10 }],
+      error: null,
+    }
+
+    const result = await getAiUsageToday(USER_ID)
+
+    expect(result.plan).toBe('paid')
+    const openai = result.providers.find((p) => p.provider === 'openai')
+    expect(openai?.limit).toBe(100)
+    expect(openai?.remaining).toBe(90)
+  })
+
+  it('ai_usage データが空のときは count=0 でプロバイダ一覧を返す', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._defaultResult.current = { data: [], error: null }
+
+    const result = await getAiUsageToday(USER_ID)
+
+    expect(result.providers).toHaveLength(3) // gemini/openai/anthropic
+    for (const p of result.providers) {
+      expect(p.count).toBe(0)
+      expect(p.remaining).toBe(5)
+    }
+  })
+
+  it('ai_usage が null のときは count=0 として扱う', async () => {
+    mockClient._maybeSingle.mockResolvedValueOnce({ data: { plan: 'free' }, error: null })
+    mockClient._defaultResult.current = { data: null, error: null }
+
+    const result = await getAiUsageToday(USER_ID)
+
+    for (const p of result.providers) {
+      expect(p.count).toBe(0)
+    }
   })
 })
