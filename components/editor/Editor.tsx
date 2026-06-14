@@ -15,7 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createUploadUrl } from '@/lib/actions/images'
 import { compressImage, type CompressError } from '@/lib/images/compress'
 import { ERR_IMAGE_TOO_LARGE } from '@/lib/constants/errors'
-import { MAX_IMAGE_INPUT_SIZE_MB } from '@/lib/constants/limits'
+import { MAX_IMAGE_INPUT_SIZE_MB, SIGNED_URL_EXPIRES_IN } from '@/lib/constants/limits'
 import { SlashMenu } from './SlashMenu'
 
 type EditorProps = {
@@ -29,11 +29,12 @@ function isPartialBlockArray(value: unknown): value is PartialBlock[] {
 }
 
 function isCompressError(value: unknown): value is CompressError {
+  // `'kind' in value` が成立した時点で TypeScript は value を `{ kind: unknown }` に絞る
   return (
     typeof value === 'object' &&
     value !== null &&
     'kind' in value &&
-    typeof (value as Record<string, unknown>)['kind'] === 'string'
+    typeof value.kind === 'string'
   )
 }
 
@@ -107,7 +108,7 @@ export function Editor({ pageId, initialContent, onContentChange }: EditorProps)
     }
 
     // 署名URLではなく storage path を返す。
-    // 表示時に useImageUrl フックが path から署名URLを生成する（期限切れ回避）。
+    // 表示時に resolveFileUrl が path から署名URLを生成する（期限切れ回避）。
     return path
   }, [pageId])
 
@@ -120,7 +121,7 @@ export function Editor({ pageId, initialContent, onContentChange }: EditorProps)
     const supabase = createClient()
     const { data } = await supabase.storage
       .from('page-images')
-      .createSignedUrl(url, 3600)
+      .createSignedUrl(url, SIGNED_URL_EXPIRES_IN)
     return data?.signedUrl ?? url
   }, [])
 

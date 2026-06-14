@@ -7,8 +7,8 @@
 |---|--------------|------------------------------|--------|------|
 | M1 | 基盤＋認証 | プロジェクト雛形 / テスト基盤 / 定数・型 / DB スキーマ+RLS+関数 / Supabase クライアント / proxy.ts / 認証一式（3.1, 4, 6.1, 7） | `2026-06-13-m1-foundation-auth.md` | **完了（2026-06-13）** |
 | M2 | ページ管理 | pages Server Actions（CRUD/移動/並べ替え/ごみ箱）/ サイドバーツリー / `/pages` `/pages/[id]`枠 / `/trash`（3.2, 5.1, 6.2） | `2026-06-13-m2-pages.md` | **完了（2026-06-13）** ※下記 CSP 課題は別途 |
-| M3 | エディタ＋画像 | BlockNote エディタ / 自動保存 / 画像圧縮＋アップロード（3.3, 5.2） | M2 完了後に作成 | 次に着手 |
-| M4 | AI（BYOK） | key-storage / providers（gemini, anthropic, openai）/ prompts / consumeAiUsage / `/api/ai/proxy` / AI メニュー＋サイドパネル / `/settings/ai`（3.4, 5.3, 5.6） | M3 完了後に作成 | 未着手 |
+| M3 | エディタ＋画像 | BlockNote エディタ / 自動保存 / 画像圧縮＋アップロード（3.3, 5.2） | `2026-06-14-m3-editor-images.md` | **完了（2026-06-14、evaluator PASS）** ※画像のカスタム UX は後続 |
+| M4 | AI（BYOK） | key-storage / providers（gemini, anthropic, openai）/ prompts / consumeAiUsage / `/api/ai/proxy` / AI メニュー＋サイドパネル / `/settings/ai`（3.4, 5.3, 5.6） | M3 完了後に作成 | 次に着手 |
 | M5 | 設定・公開・運用 | 設定残り（profile/usage/account/外観）/ LP・help・法務 / cron cleanup-trash / `/api/health` / SEO・noindex / アクセシビリティ / E2E 全 spec 完備（3.5, 3.11, 3.12, 5.4, 5.7, 6.4） | M4 完了後に作成 | 未着手 |
 
 ## マイルストーン間の依存
@@ -26,7 +26,8 @@ M1 (基盤+認証) → M2 (ページ管理) → M3 (エディタ+画像) → M4 
 
 | 課題 | 内容 | 顕在化 | 対応予定 |
 |------|------|--------|---------|
-| CSP nonce が静的ページで無効 | `proxy.ts` が本番で `script-src 'nonce-… strict-dynamic'` を出すが、静的プリレンダされた公開ページ（/, /login 等）のスクリプトに nonce が付与されずブロックされる（Next.js の静的生成と per-request nonce の非互換）。dev は緩い CSP のため M1 では露見せず、M2 の本番ビルド E2E で発覚。現状 E2E は `bypassCSP: true` で暫定回避。**本番デプロイ（M5）を壊すため、それまでに方針決定＋修正が必要。** | M2 | 方針決定待ち（nonce+動的化 / unsafe-inline / M5 保留） |
+| ~~CSP nonce が静的ページで無効~~ | ~~proxy.ts の nonce が静的ページで効かず本番でスクリプトがブロック~~ → **解決済み（M2 で `app/layout.tsx` の `await headers()` で動的化、E2E は実 CSP で緑）** | M2 | ✅ 完了 |
+| 画像のカスタム UX 未結線 | designer 仕様（§9-3 アップロード進捗・§9-4 カスタムエラー＋再試行/削除）が実描画に未結線で、BlockNote 既定の画像 UI が表示される。機能（圧縮→WebP保存→表示・各エラー）は充足。未使用コンポーネントは M3 仕上げで整理。カスタム UX を出すなら `createReactBlockSpec` で画像ブロックを実装する後続作業が必要。 | M3 | 後続エンハンス（design doc に仕様保持） |
 
 ## 第2弾以降（このロードマップ外）
 
