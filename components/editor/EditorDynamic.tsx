@@ -7,10 +7,14 @@
  */
 import dynamic from 'next/dynamic'
 import { EditorSkeleton } from './EditorSkeleton'
+
 type EditorDynamicProps = {
   pageId: string
   initialContent: unknown
   onContentChange: (content: unknown[], contentText: string) => void
+  pageContentText?: string
+  onAskPanelOpen?: () => void
+  onToast?: (message: string, actionLabel?: string, actionHref?: string) => void
 }
 
 const EditorInner = dynamic(

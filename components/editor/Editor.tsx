@@ -9,19 +9,27 @@
  */
 import '@blocknote/react/style.css'
 import { useCallback } from 'react'
-import { BlockNoteViewRaw, useCreateBlockNote, SuggestionMenuController, getDefaultReactSlashMenuItems } from '@blocknote/react'
+import { BlockNoteViewRaw, useCreateBlockNote, SuggestionMenuController, getDefaultReactSlashMenuItems, FormattingToolbarController } from '@blocknote/react'
 import type { PartialBlock, Block, DefaultBlockSchema, DefaultInlineContentSchema, DefaultStyleSchema } from '@blocknote/core'
+import type { FormattingToolbarProps } from '@blocknote/react'
 import { createClient } from '@/lib/supabase/client'
 import { createUploadUrl } from '@/lib/actions/images'
 import { compressImage, type CompressError } from '@/lib/images/compress'
 import { ERR_IMAGE_TOO_LARGE } from '@/lib/constants/errors'
 import { MAX_IMAGE_INPUT_SIZE_MB, SIGNED_URL_EXPIRES_IN } from '@/lib/constants/limits'
 import { SlashMenu } from './SlashMenu'
+import { AiFormattingToolbar } from './AiFormattingToolbar'
 
 type EditorProps = {
   pageId: string
   initialContent: unknown
   onContentChange: (content: unknown[], contentText: string) => void
+  /** AI 操作のコンテキスト用ページ全体テキスト（PageView から渡す） */
+  pageContentText?: string
+  /** 「このページに質問する」クリック時のコールバック */
+  onAskPanelOpen?: () => void
+  /** トースト表示用コールバック */
+  onToast?: (message: string, actionLabel?: string, actionHref?: string) => void
 }
 
 function isPartialBlockArray(value: unknown): value is PartialBlock[] {
@@ -58,7 +66,7 @@ function extractText(editor: DefaultEditor): string {
   }
 }
 
-export function Editor({ pageId, initialContent, onContentChange }: EditorProps) {
+export function Editor({ pageId, initialContent, onContentChange, pageContentText = '', onAskPanelOpen, onToast }: EditorProps) {
   // initialContent はマウント時の一度だけ使うため変数に確定する（deps で空配列を渡すことで再初期化しない）
   // 空配列は BlockNote が拒否して "Error creating document from blocks" を throw するため
   // undefined にしてデフォルトの空段落を使わせる
@@ -142,6 +150,46 @@ export function Editor({ pageId, initialContent, onContentChange }: EditorProps)
     onContentChange(content, contentText)
   }, [editor, onContentChange])
 
+  const handleInsertText = useCallback((text: string) => {
+    // ページ末尾に新しいブロックとして挿入（要約・続き書き共通）
+    const lastBlock = editor.document[editor.document.length - 1]
+    if (lastBlock) {
+      editor.insertBlocks(
+        [{ type: 'paragraph', content: [{ type: 'text', text, styles: {} }] }],
+        lastBlock,
+        'after'
+      )
+    }
+  }, [editor])
+
+  const handleReplaceText = useCallback((text: string) => {
+    // 選択範囲をテキストで置換（翻訳）
+    editor.insertInlineContent([{ type: 'text', text, styles: {} }])
+  }, [editor])
+
+  const handleToast = useCallback(
+    (message: string, actionLabel?: string, actionHref?: string) => {
+      onToast?.(message, actionLabel, actionHref)
+    },
+    [onToast]
+  )
+
+  // FormattingToolbarController の formattingToolbar prop は FC<FormattingToolbarProps> しか受け付けないため、
+  // AiFormattingToolbar の追加 props（pageContentText 等）をクロージャで束縛するラッパーを作る。
+  const CustomFormattingToolbar = useCallback(
+    (props: FormattingToolbarProps) => (
+      <AiFormattingToolbar
+        {...props}
+        pageContentText={pageContentText}
+        onAskPanelOpen={onAskPanelOpen ?? (() => {})}
+        onInsertText={handleInsertText}
+        onReplaceText={handleReplaceText}
+        onToast={handleToast}
+      />
+    ),
+    [pageContentText, onAskPanelOpen, handleInsertText, handleReplaceText, handleToast]
+  )
+
   return (
     <div
       data-testid="editor-root"
@@ -153,7 +201,9 @@ export function Editor({ pageId, initialContent, onContentChange }: EditorProps)
         theme="light"
         onChange={handleChange}
         slashMenu={false}
+        formattingToolbar={false}
       >
+        <FormattingToolbarController formattingToolbar={CustomFormattingToolbar} />
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) => {

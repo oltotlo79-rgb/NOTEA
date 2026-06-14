@@ -10,9 +10,11 @@ type PageHeaderProps = {
   title: string
   icon: string | null
   onEnterPress?: () => void
+  /** モバイル専用 AI ボタンスロット（md:hidden で表示） */
+  aiMenuSlot?: React.ReactNode
 }
 
-export function PageHeader({ pageId, title: initialTitle, icon: initialIcon, onEnterPress }: PageHeaderProps) {
+export function PageHeader({ pageId, title: initialTitle, icon: initialIcon, onEnterPress, aiMenuSlot }: PageHeaderProps) {
   const queryClient = useQueryClient()
   const [title, setTitle] = useState(initialTitle)
   const [icon, setIcon] = useState(initialIcon)
@@ -58,6 +60,13 @@ export function PageHeader({ pageId, title: initialTitle, icon: initialIcon, onE
 
   return (
     <div className="px-8 pt-12 pb-4">
+      {/* モバイル専用 AI ボタン（デスクトップでは非表示） */}
+      {aiMenuSlot && (
+        <div className="flex justify-end mb-2 md:hidden">
+          {aiMenuSlot}
+        </div>
+      )}
+
       {/* アイコン */}
       <div className="mb-3">
         {isEditingIcon ? (

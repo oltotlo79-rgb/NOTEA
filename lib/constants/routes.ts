@@ -10,6 +10,7 @@ export const ROUTES = {
   PAGES: '/pages',
   TRASH: '/trash',
   SETTINGS: '/settings',
+  SETTINGS_AI: '/settings/ai',
 } as const
 
 export const PROTECTED_PATHS: readonly string[] = [ROUTES.PAGES, ROUTES.SETTINGS, ROUTES.TRASH]

@@ -8,6 +8,7 @@ import { useSidebarState } from '@/hooks/use-sidebar-state'
 import { cn } from '@/lib/utils'
 import { AutoSaveProvider, useAutoSaveContext } from '@/components/editor/AutoSaveContext'
 import { AutoSaveStatus } from '@/components/editor/AutoSaveStatus'
+import { AiUsageBadge } from '@/components/ai/AiUsageBadge'
 
 const SIDEBAR_WIDTH = 260
 
@@ -69,8 +70,9 @@ function AppShellInner({ children, userEmail }: AppShellProps) {
             </SheetContent>
           </Sheet>
 
-          {/* 右端: 自動保存ステータス（エディタページでのみ表示） */}
-          <div className="ml-auto">
+          {/* 右端: AI残回数バッジ + 自動保存ステータス（エディタページでのみ表示） */}
+          <div className="ml-auto flex items-center gap-3">
+            {autoSaveCtx && <AiUsageBadge />}
             {autoSaveCtx && (
               <AutoSaveStatus status={autoSaveCtx.status} onRetry={autoSaveCtx.onRetry} />
             )}

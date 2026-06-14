@@ -24,3 +24,19 @@ export const ERR_AI_LIMIT_REACHED = (limit: number) =>
   `AI の利用回数が本日の上限（${limit}回）に達しました。明日（JST 0時以降）再度ご利用ください`
 export const ERR_AI_FAILED = 'AI の処理に失敗しました。時間をおいて再試行してください'
 export const ERR_AI_PROXY_FORBIDDEN = '転送先が許可されていません'
+
+export const ERR_AI_KEY_INVALID =
+  'API キーが無効です。設定から再登録してください。'
+export const ERR_AI_KEY_NOT_FOUND =
+  'AI を使うには API キーの登録が必要です。設定から Gemini などのキーを登録してください。'
+export const ERR_AI_KEY_FORMAT = 'キーの形式が正しくありません'
+export const ERR_AI_DAILY_LIMIT_FREE = (limit: number) =>
+  `本日の AI 利用回数（${limit}回）に達しました。明日 0 時（JST）にリセットされます。`
+export const ERR_AI_DAILY_LIMIT_PAID = (limit: number) =>
+  `本日の AI 利用回数（${limit}回）に達しました。明日 0 時（JST）にリセットされます。`
+export const ERR_AI_NETWORK =
+  '通信エラーが発生しました。ネットワーク状態を確認して再試行してください。'
+export const ERR_AI_RATE_LIMITED =
+  '現在 API のリクエストが多すぎます。しばらく待ってから再試行してください。'
+export const ERR_AI_EMPTY_CONTENT =
+  'ページに本文がありません。テキストを入力してから操作してください。'
