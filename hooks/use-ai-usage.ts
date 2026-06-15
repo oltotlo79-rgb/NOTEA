@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { getAiUsageToday } from '@/lib/actions/ai'
+import { FREE_AI_DAILY_LIMIT } from '@/lib/constants/limits'
 
 type AiUsageData = Awaited<ReturnType<typeof getAiUsageToday>>
 
@@ -14,7 +15,7 @@ export function useAiUsage() {
   })
 
   const plan = data?.plan ?? 'free'
-  const limit = data?.limit ?? 5
+  const limit = data?.limit ?? FREE_AI_DAILY_LIMIT
   const totalUsed = data?.providers.reduce((sum, p) => sum + p.count, 0) ?? 0
   const remaining = Math.max(0, limit - totalUsed)
 

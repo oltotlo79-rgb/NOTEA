@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { clickAndWaitForUrl } from './helpers/navigation'
-import { login, createPage, createPageWithTitle } from './helpers/auth'
+import { login, createPageWithTitle } from './helpers/auth'
 import { cleanupSeedUserPages } from './helpers/db'
 
 test.beforeEach(async () => {

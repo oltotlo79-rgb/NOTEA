@@ -36,6 +36,8 @@ vi.mock('@blocknote/react', () => {
       return null
     }),
     SuggestionMenuController: vi.fn(() => null),
+    // M4 AI ツールバー統合で追加。モックしないと "No export" エラーになる。
+    FormattingToolbarController: vi.fn(() => null),
     getDefaultReactSlashMenuItems: vi.fn(() => []),
   }
 })

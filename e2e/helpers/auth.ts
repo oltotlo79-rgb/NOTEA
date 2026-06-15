@@ -44,6 +44,49 @@ export async function login(page: Page) {
 }
 
 /**
+ * 認証を通して設定ページへ遷移し、ページが安定するまで待つ。
+ * /settings/* テスト専用のヘルパー。
+ *
+ * /pages 到達のみで return すると直後の page.goto('/settings/ai') +
+ * waitForLoadState('networkidle') が前のナビゲーション pending fetch と
+ * 競合して 90s タイムアウトする。そのため:
+ *   1. /pages で hydration 完了（メール表示）を確認してから
+ *   2. 設定ページへ goto して domcontentloaded まで待つ
+ *
+ * 引数 settingsPath: 遷移先設定ページのパス（デフォルト: '/settings/ai'）
+ */
+export async function loginForSettings(page: Page, settingsPath = '/settings/ai') {
+  await page.goto('/login')
+  await page.waitForLoadState('domcontentloaded').catch(() => {})
+  await page.getByLabel('メールアドレス').fill(E2E_EMAIL)
+  await page.getByLabel('パスワード').fill(E2E_PASSWORD)
+  await page.getByRole('button', { name: 'ログイン', exact: true }).click()
+
+  // router.push() + router.refresh() の二段階 navigation に対応するため
+  // URL が /pages で始まるまでポーリングする
+  await page.waitForFunction(() => window.location.pathname.startsWith('/pages'), {
+    timeout: 60000,
+  })
+
+  // hydration 完了の目印: サイドバーのメール表示が可視になる。
+  // networkidle を待たずに DOM 要素で hydration を確認することで
+  // Next.js の継続的 fetch による networkidle 永久待ちを回避する。
+  await expect(page.getByText(E2E_EMAIL)).toBeVisible({ timeout: 15000 })
+
+  // useTransition による disabled 解除を待つ（ログアウトボタン）
+  const signOutBtn = page.getByRole('button', { name: 'ログアウト' })
+  await expect(signOutBtn).toBeEnabled({ timeout: 10000 })
+
+  // /pages の hydration が安定した後に設定ページへ直接遷移する。
+  // ここで goto してからテスト側でも goto すると2回遷移するが問題はない。
+  // 目的: このヘルパー内で設定ページへの遷移まで完了させることで
+  // テスト側の waitForLoadState('networkidle') が安定した状態から始まる。
+  await page.goto(settingsPath)
+  // domcontentloaded で十分。networkidle は設定ページの fetch で遅延する場合がある。
+  await page.waitForLoadState('domcontentloaded').catch(() => {})
+}
+
+/**
  * ページを新規作成し、新しい /pages/[id] が確定するまで待つ。
  * 返り値は作成されたページの UUID。
  *

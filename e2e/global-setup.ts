@@ -12,6 +12,7 @@ const BASE_URL = 'http://localhost:3010'
 const E2E_EMAIL = 'e2e@example.com'
 const E2E_PASSWORD = 'Password123'
 
+
 /**
  * 本番ビルド直後の cold-start タイムアウト解消のためにルートをウォームアップする。
  *
@@ -67,6 +68,10 @@ async function warmupRoutes(): Promise<void> {
     await page.goto('/trash', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {})
     await page.waitForLoadState('networkidle').catch(() => {})
 
+    // /settings/ai ルートの初期化（AI BYOK テストで使用）
+    await page.goto('/settings/ai', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {})
+    await page.waitForLoadState('networkidle').catch(() => {})
+
     await context.close()
   } finally {
     await browser.close()
@@ -79,10 +84,11 @@ export default async function globalSetup() {
   await warmupRoutes().catch(() => {})
 
   // ウォームアップで作成したデータを含めて DB をクリーンな seed 状態に戻す
+  // "Restarting containers" ステップが 120s を超える場合があるため 300s に延長する
   execSync('npx supabase db reset', {
     cwd: PROJECT_ROOT,
     stdio: 'pipe',
-    timeout: 120000,
+    timeout: 300000,
   })
 
   // supabase db reset 後にコンテナが安定するまで待つ
