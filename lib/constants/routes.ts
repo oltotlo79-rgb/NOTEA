@@ -11,6 +11,14 @@ export const ROUTES = {
   TRASH: '/trash',
   SETTINGS: '/settings',
   SETTINGS_AI: '/settings/ai',
+  SETTINGS_PROFILE: '/settings/profile',
+  SETTINGS_USAGE: '/settings/usage',
+  SETTINGS_ACCOUNT: '/settings/account',
+  SETTINGS_APPEARANCE: '/settings/appearance',
+  HELP: '/help',
+  TERMS: '/terms',
+  PRIVACY: '/privacy',
+  TOKUSHOHO: '/tokushoho',
 } as const
 
 export const PROTECTED_PATHS: readonly string[] = [ROUTES.PAGES, ROUTES.SETTINGS, ROUTES.TRASH]

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import Link from 'next/link'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Settings, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -60,6 +60,13 @@ export function Sidebar({ userEmail }: SidebarProps) {
         >
           <Trash2 className="size-4" />
           ごみ箱
+        </Link>
+        <Link
+          href={ROUTES.SETTINGS}
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <Settings className="size-4" />
+          設定
         </Link>
         {userEmail && (
           <p className="truncate px-2 py-1 text-xs text-muted-foreground">

@@ -1,24 +1,31 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/lib/constants/routes'
+import type { Metadata } from 'next'
+import { LandingHero } from '@/components/public/LandingHero'
+import { FeatureCards } from '@/components/public/FeatureCards'
+import { BYOKExplainer } from '@/components/public/BYOKExplainer'
+import { PricingSection } from '@/components/public/PricingSection'
 
 // 本番 CSP nonce が per-request で変わるため、静的プリレンダではスクリプトがブロックされる。
 // force-dynamic でランタイムレンダリングに固定し、proxy が付与する nonce を script に適用させる。
 export const dynamic = 'force-dynamic'
 
+export const metadata: Metadata = {
+  title: 'Notea — Notion 風メモアプリ（BYOK AI）',
+  description: 'ブロックエディタ × BYOK AI のメモアプリ。あなた自身の API キーで AI を使え、キーは Notea に渡りません。',
+  openGraph: {
+    title: 'Notea — Notion 風メモアプリ（BYOK AI）',
+    description: 'ブロックエディタ × BYOK AI のメモアプリ。あなた自身の API キーで AI を使え、キーは Notea に渡りません。',
+    type: 'website',
+    url: process.env.NEXT_PUBLIC_APP_URL ?? 'https://notea.app/',
+  },
+}
+
 export default function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
-      <h1 className="text-4xl font-bold tracking-tight">Notea</h1>
-      <p className="max-w-md text-muted-foreground">
-        Notion 風のメモ・ドキュメントアプリ。AI はあなた自身の API キーで動くから、安心して使えます。
-      </p>
-      <div className="flex gap-3">
-        <Button render={<Link href={ROUTES.REGISTER} />}>無料で始める</Button>
-        <Button variant="outline" render={<Link href={ROUTES.LOGIN} />}>
-          ログイン
-        </Button>
-      </div>
-    </main>
+    <>
+      <LandingHero />
+      <FeatureCards />
+      <BYOKExplainer />
+      <PricingSection />
+    </>
   )
 }

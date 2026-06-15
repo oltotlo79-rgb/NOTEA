@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { AutoSaveProvider, useAutoSaveContext } from '@/components/editor/AutoSaveContext'
 import { AutoSaveStatus } from '@/components/editor/AutoSaveStatus'
 import { AiUsageBadge } from '@/components/ai/AiUsageBadge'
+import { useGlobalShortcuts } from '@/hooks/use-global-shortcuts'
 
 const SIDEBAR_WIDTH = 260
 
@@ -20,6 +21,8 @@ type AppShellProps = {
 function AppShellInner({ children, userEmail }: AppShellProps) {
   const { isSidebarCollapsed, toggleSidebar } = useSidebarState()
   const autoSaveCtx = useAutoSaveContext()
+
+  useGlobalShortcuts({ onToggleSidebar: toggleSidebar })
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -35,6 +38,15 @@ function AppShellInner({ children, userEmail }: AppShellProps) {
 
       {/* メインコンテンツ */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* スキップリンク: フォーカス時のみ表示 */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-background focus:border focus:border-border focus:rounded-md focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+          data-testid="skip-to-main"
+        >
+          メインコンテンツへスキップ
+        </a>
+
         {/* トップバー */}
         <header className="flex h-10 items-center gap-2 border-b border-border px-3 md:px-4 shrink-0">
           {/* デスクトップ: サイドバー折りたたみボタン */}
@@ -79,7 +91,7 @@ function AppShellInner({ children, userEmail }: AppShellProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main id="main-content" className="flex-1 overflow-auto">
           {children}
         </main>
       </div>
