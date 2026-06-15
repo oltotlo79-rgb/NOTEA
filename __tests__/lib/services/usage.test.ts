@@ -7,7 +7,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => mockClient,
 }))
 
-const { getStorageUsage, consumeAiUsage, getAiUsageToday } = await import(
+const { getStorageUsage, consumeAiUsage, getAiUsageToday, getPageCount } = await import(
   '@/lib/services/usage'
 )
 
@@ -309,5 +309,45 @@ describe('getAiUsageToday', () => {
     for (const p of result.providers) {
       expect(p.count).toBe(0)
     }
+  })
+})
+
+// =====================
+// getPageCount
+// =====================
+describe('getPageCount', () => {
+  it('正常系: rpc の戻り値をそのまま返す', async () => {
+    mockClient._rpc.mockResolvedValueOnce({ data: 42, error: null })
+
+    const count = await getPageCount(USER_ID)
+
+    expect(count).toBe(42)
+  })
+
+  it('rpc が 0 を返した場合は 0', async () => {
+    mockClient._rpc.mockResolvedValueOnce({ data: 0, error: null })
+
+    const count = await getPageCount(USER_ID)
+
+    expect(count).toBe(0)
+  })
+
+  it('rpc がエラーを返した場合は 0 にフォールバック', async () => {
+    mockClient._rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'rpc error' },
+    })
+
+    const count = await getPageCount(USER_ID)
+
+    expect(count).toBe(0)
+  })
+
+  it('data が null の場合は 0 にフォールバック', async () => {
+    mockClient._rpc.mockResolvedValueOnce({ data: null, error: null })
+
+    const count = await getPageCount(USER_ID)
+
+    expect(count).toBe(0)
   })
 })

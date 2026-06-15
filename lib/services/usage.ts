@@ -136,6 +136,20 @@ export async function consumeAiUsage(
   return { remaining }
 }
 
+/**
+ * ユーザーのページ数を返す。
+ * count_user_pages rpc はセッション中のユーザーを参照するため、
+ * 呼び出し前に認証が完了していることを呼び出し元が保証する。
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- userId は count_user_pages rpc がセッション経由で参照するため直接渡さない
+export async function getPageCount(userId: string): Promise<number> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('count_user_pages')
+  if (error || data === null) return 0
+  // rpc の戻り値型: number
+  return typeof data === 'number' ? data : 0
+}
+
 /** provider 別の ai_usage 行を表す型（database.ts の Row から最小カラム） */
 type AiUsageRow = { provider: string; count: number }
 

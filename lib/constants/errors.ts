@@ -40,3 +40,11 @@ export const ERR_AI_RATE_LIMITED =
   '現在 API のリクエストが多すぎます。しばらく待ってから再試行してください。'
 export const ERR_AI_EMPTY_CONTENT =
   'ページに本文がありません。テキストを入力してから操作してください。'
+
+export const ERR_PROFILE_NOT_FOUND = 'プロフィールが見つかりません'
+export const ERR_PROFILE_UPDATE_FAILED = 'プロフィールの更新に失敗しました。時間をおいて再試行してください'
+export const ERR_ACCOUNT_DELETE_CONFIRMATION =
+  'アカウント削除の確認テキストが一致しません。もう一度入力してください'
+export const ERR_ACCOUNT_DELETE_FAILED =
+  'アカウントの削除に失敗しました。時間をおいて再試行してください'
+export const ERR_CRON_UNAUTHORIZED = 'Unauthorized'
