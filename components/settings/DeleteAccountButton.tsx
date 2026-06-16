@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { deleteAccount } from '@/lib/actions/profile'
 import { ACCOUNT_DELETE_CONFIRMATION } from '@/lib/constants/limits'
 import { ROUTES } from '@/lib/constants/routes'
+import { removeKey } from '@/lib/ai/key-storage'
+import { AI_PROVIDERS } from '@/lib/constants/limits/ai'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -47,6 +49,10 @@ export function DeleteAccountButton() {
     startTransition(async () => {
       const result = await deleteAccount({ confirmation: confirmText })
       if (result.success) {
+        // ダイアログの表示と実際の処理を一致させるため、アカウント削除成功後に全プロバイダの AI キーをブラウザから削除する
+        for (const provider of AI_PROVIDERS) {
+          removeKey(provider)
+        }
         // セッションをクライアント側でもクリアしてから遷移する
         const supabase = createClient()
         await supabase.auth.signOut()

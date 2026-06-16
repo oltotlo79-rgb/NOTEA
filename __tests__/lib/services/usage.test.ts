@@ -207,9 +207,10 @@ describe('consumeAiUsage', () => {
     const result = await consumeAiUsage(USER_ID, 'gemini')
 
     expect('code' in result).toBe(true)
-    if ('code' in result) {
+    if ('code' in result && result.code === 'LIMIT_EXCEEDED') {
       expect(result.code).toBe('LIMIT_EXCEEDED')
       expect(result.message).toContain('5')
+      expect(result.limit).toBe(5)
     }
   })
 
@@ -223,9 +224,10 @@ describe('consumeAiUsage', () => {
     const result = await consumeAiUsage(USER_ID, 'openai')
 
     expect('code' in result).toBe(true)
-    if ('code' in result) {
+    if ('code' in result && result.code === 'LIMIT_EXCEEDED') {
       expect(result.code).toBe('LIMIT_EXCEEDED')
       expect(result.message).toContain('100')
+      expect(result.limit).toBe(100)
     }
   })
 

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyCronAuth } from '@/lib/utils/cron-auth'
 import { TRASH_RETENTION_DAYS } from '@/lib/constants/limits'
-import { ERR_CRON_UNAUTHORIZED } from '@/lib/constants/errors'
+import { ERR_CRON_DB_DELETE, ERR_CRON_DB_FETCH, ERR_CRON_UNAUTHORIZED } from '@/lib/constants/errors'
 
 const NO_STORE = { 'Cache-Control': 'no-store' }
 
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (fetchError) {
     return NextResponse.json(
-      { error: 'DB fetch failed' },
+      { error: ERR_CRON_DB_FETCH },
       { status: 500, headers: NO_STORE }
     )
   }
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (deleteError) {
     return NextResponse.json(
-      { error: 'DB delete failed' },
+      { error: ERR_CRON_DB_DELETE },
       { status: 500, headers: NO_STORE }
     )
   }

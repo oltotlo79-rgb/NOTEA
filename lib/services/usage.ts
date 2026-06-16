@@ -83,7 +83,7 @@ export async function getStorageUsage(
 /** consumeAiUsage で返す判別可能なエラー種別 */
 export type AiUsageError =
   | { code: 'PROVIDER_NOT_ALLOWED'; message: string }
-  | { code: 'LIMIT_EXCEEDED'; message: string }
+  | { code: 'LIMIT_EXCEEDED'; message: string; limit: number }
   | { code: 'DB_ERROR'; message: string }
 
 /**
@@ -125,6 +125,7 @@ export async function consumeAiUsage(
       return {
         code: 'LIMIT_EXCEEDED',
         message: `AI の利用回数が本日の上限（${limit}回）に達しました。明日（JST 0時以降）再度ご利用ください`,
+        limit,
       }
     }
     return { code: 'DB_ERROR', message: 'データの読み書きに失敗しました。時間をおいて再試行してください' }

@@ -15,7 +15,7 @@
 'use server'
 
 import { z } from 'zod'
-import { AI_PROVIDERS, type AiProvider } from '@/lib/constants/limits/ai'
+import { AI_PROVIDERS, FREE_AI_DAILY_LIMIT, PAID_AI_DAILY_LIMIT, type AiProvider } from '@/lib/constants/limits/ai'
 import {
   ERR_AI_FAILED,
   ERR_AI_LIMIT_REACHED,
@@ -29,8 +29,6 @@ import {
   getAiUsageToday as serviceGetAiUsageToday,
 } from '@/lib/services/usage'
 import { actionError, actionSuccess, type ActionResult } from '@/types/action-result'
-
-import { FREE_AI_DAILY_LIMIT, PAID_AI_DAILY_LIMIT } from '@/lib/constants/limits/ai'
 
 const consumeAiUsageSchema = z.object({
   provider: z.enum(AI_PROVIDERS),
@@ -68,10 +66,7 @@ export async function consumeAiUsage(
       return actionError<{ remaining: number }>(ERR_AI_PROVIDER_NOT_ALLOWED)
     }
     if (result.code === 'LIMIT_EXCEEDED') {
-      const limitMatch = result.message.match(/上限（(\d+)回）/)
-      const limitNum =
-        limitMatch?.[1] !== undefined ? parseInt(limitMatch[1], 10) : FREE_AI_DAILY_LIMIT
-      return actionError<{ remaining: number }>(ERR_AI_LIMIT_REACHED(limitNum))
+      return actionError<{ remaining: number }>(ERR_AI_LIMIT_REACHED(result.limit))
     }
     return actionError<{ remaining: number }>(ERR_AI_FAILED)
   }

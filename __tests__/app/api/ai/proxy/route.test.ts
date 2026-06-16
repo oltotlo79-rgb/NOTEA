@@ -137,6 +137,7 @@ describe('POST /api/ai/proxy - 回数消費', () => {
     vi.mocked(mockConsumeAiUsage).mockResolvedValueOnce({
       code: 'LIMIT_EXCEEDED',
       message: 'AI の利用回数が本日の上限（5回）に達しました',
+      limit: 5,
     })
 
     const req = makeRequest({ path: '/v1/chat/completions' })
@@ -230,6 +231,7 @@ describe('POST /api/ai/proxy - 鍵非漏洩', () => {
     vi.mocked(mockConsumeAiUsage).mockResolvedValueOnce({
       code: 'LIMIT_EXCEEDED',
       message: 'AI の利用回数が本日の上限（5回）に達しました',
+      limit: 5,
     })
 
     const req = makeRequest({ path: '/v1/chat/completions' }, 'sk-secret-key-12345')

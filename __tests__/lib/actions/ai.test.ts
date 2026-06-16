@@ -78,6 +78,7 @@ describe('consumeAiUsage Action', () => {
     vi.mocked(mockServiceConsumeAiUsage).mockResolvedValueOnce({
       code: 'LIMIT_EXCEEDED',
       message: 'AI の利用回数が本日の上限（5回）に達しました',
+      limit: 5,
     })
 
     const result = await consumeAiUsage('gemini')

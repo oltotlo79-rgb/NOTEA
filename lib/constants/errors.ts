@@ -48,3 +48,5 @@ export const ERR_ACCOUNT_DELETE_CONFIRMATION =
 export const ERR_ACCOUNT_DELETE_FAILED =
   'アカウントの削除に失敗しました。時間をおいて再試行してください'
 export const ERR_CRON_UNAUTHORIZED = 'Unauthorized'
+export const ERR_CRON_DB_FETCH = 'DB fetch failed'
+export const ERR_CRON_DB_DELETE = 'DB delete failed'
