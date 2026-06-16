@@ -58,6 +58,8 @@ export function createMockSupabaseClient(options: MockSupabaseOptions = {}) {
     'order',
     'limit',
     'filter',
+    'or',
+    'textSearch',
   ] as const
 
   for (const method of chainMethods) {

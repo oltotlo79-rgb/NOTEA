@@ -82,6 +82,16 @@ describe('useGlobalShortcuts', () => {
     })
   })
 
+  it('Ctrl+K で検索ページへ遷移する', () => {
+    const { wrapper } = makeWrapper()
+    renderHook(() => useGlobalShortcuts({ onToggleSidebar: mockToggleSidebar }), { wrapper })
+
+    const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })
+    document.dispatchEvent(event)
+
+    expect(mockRouterPush).toHaveBeenCalledWith('/search')
+  })
+
   it('Ctrl+, で設定ページへ遷移する', () => {
     const { wrapper } = makeWrapper()
     renderHook(() => useGlobalShortcuts({ onToggleSidebar: mockToggleSidebar }), { wrapper })

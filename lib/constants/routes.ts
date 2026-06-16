@@ -8,6 +8,7 @@ export const ROUTES = {
   AUTH_CALLBACK: '/auth/callback',
   AUTH_CONFIRM: '/auth/confirm',
   PAGES: '/pages',
+  SEARCH: '/search',
   TRASH: '/trash',
   SETTINGS: '/settings',
   SETTINGS_AI: '/settings/ai',
@@ -21,7 +22,12 @@ export const ROUTES = {
   TOKUSHOHO: '/tokushoho',
 } as const
 
-export const PROTECTED_PATHS: readonly string[] = [ROUTES.PAGES, ROUTES.SETTINGS, ROUTES.TRASH]
+export const PROTECTED_PATHS: readonly string[] = [
+  ROUTES.PAGES,
+  ROUTES.SEARCH,
+  ROUTES.SETTINGS,
+  ROUTES.TRASH,
+]
 
 // 完全一致で判定する（/password-reset/confirm はリカバリーセッション中＝認証済みでも
 // 表示する必要があるため、prefix 一致にしない）

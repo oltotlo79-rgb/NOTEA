@@ -44,6 +44,11 @@ export function useGlobalShortcuts(options: {
         })
       }
 
+      if (e.key === 'k') {
+        e.preventDefault()
+        router.push(ROUTES.SEARCH)
+      }
+
       if (e.key === ',') {
         e.preventDefault()
         router.push(ROUTES.SETTINGS)

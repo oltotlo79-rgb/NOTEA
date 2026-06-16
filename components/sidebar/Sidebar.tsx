@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import Link from 'next/link'
-import { Plus, Settings, Trash2 } from 'lucide-react'
+import { Plus, Search, Settings, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -46,6 +46,16 @@ export function Sidebar({ userEmail }: SidebarProps) {
       </div>
 
       <Separator />
+
+      <div className="px-2 pt-2">
+        <Link
+          href={ROUTES.SEARCH}
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <Search className="size-4" />
+          検索
+        </Link>
+      </div>
 
       <ScrollArea className="flex-1 py-2">
         <PageTree onCreatePage={handleCreatePage} />

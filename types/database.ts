@@ -67,6 +67,7 @@ export type Database = {
           id: string
           is_trashed: boolean
           parent_id: string | null
+          search_text: string | null
           sort_order: number
           title: string
           trashed_at: string | null
@@ -81,6 +82,7 @@ export type Database = {
           id?: string
           is_trashed?: boolean
           parent_id?: string | null
+          search_text?: string | null
           sort_order?: number
           title?: string
           trashed_at?: string | null
@@ -95,6 +97,7 @@ export type Database = {
           id?: string
           is_trashed?: boolean
           parent_id?: string | null
+          search_text?: string | null
           sort_order?: number
           title?: string
           trashed_at?: string | null
