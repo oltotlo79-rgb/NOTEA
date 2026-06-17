@@ -47,6 +47,11 @@ export const ERR_ACCOUNT_DELETE_CONFIRMATION =
   'アカウント削除の確認テキストが一致しません。もう一度入力してください'
 export const ERR_ACCOUNT_DELETE_FAILED =
   'アカウントの削除に失敗しました。時間をおいて再試行してください'
+export const ERR_SHARE_NOT_FOUND = '共有リンクが見つからないか、無効になっています'
+export const ERR_SHARE_CREATE_FAILED = '共有リンクの発行に失敗しました。時間をおいて再試行してください'
+export const ERR_SHARE_REVOKE_FAILED = '共有リンクの失効に失敗しました。時間をおいて再試行してください'
+export const ERR_SHARE_EDIT_LOGIN_REQUIRED = '編集するにはログインが必要です'
+
 export const ERR_CRON_UNAUTHORIZED = 'Unauthorized'
 export const ERR_CRON_DB_FETCH = 'DB fetch failed'
 export const ERR_CRON_DB_DELETE = 'DB delete failed'

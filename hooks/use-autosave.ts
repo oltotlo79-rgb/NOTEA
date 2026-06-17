@@ -6,8 +6,13 @@ import { AUTOSAVE_DEBOUNCE_MS, AUTOSAVE_SAVED_DISPLAY_MS } from '@/lib/constants
 
 export type AutosaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
+type SaveResult = { success: boolean }
+
 type UseAutosaveOptions = {
-  pageId: string
+  /** 既定の保存先（updatePageContent）に使うページ ID。save を渡す場合は不要 */
+  pageId?: string
+  /** 保存処理の差し替え。共有編集（updateSharedPageContent）など別の保存先で使う */
+  save?: (content: unknown[], contentText: string) => Promise<SaveResult>
 }
 
 type UseAutosaveReturn = {
@@ -18,7 +23,7 @@ type UseAutosaveReturn = {
   onContentChange: (content: unknown[], contentText: string) => void
 }
 
-export function useAutosave({ pageId }: UseAutosaveOptions): UseAutosaveReturn {
+export function useAutosave({ pageId, save }: UseAutosaveOptions): UseAutosaveReturn {
   const [status, setStatus] = useState<AutosaveStatus>('idle')
 
   // 最新の content をクロージャ更新なしで参照するために ref を使う
@@ -43,11 +48,13 @@ export function useAutosave({ pageId }: UseAutosaveOptions): UseAutosaveReturn {
     setStatus('saving')
     clearSavedTimer()
 
-    const result = await updatePageContent({
-      id: pageId,
-      content: pending.content,
-      contentText: pending.contentText,
-    })
+    const result = save
+      ? await save(pending.content, pending.contentText)
+      : await updatePageContent({
+          id: pageId ?? '',
+          content: pending.content,
+          contentText: pending.contentText,
+        })
 
     isSavingRef.current = false
 
@@ -63,7 +70,7 @@ export function useAutosave({ pageId }: UseAutosaveOptions): UseAutosaveReturn {
       // 保存失敗した content を再度 pending に戻す（再試行できるよう）
       pendingContentRef.current = pending
     }
-  }, [pageId, clearSavedTimer])
+  }, [pageId, save, clearSavedTimer])
 
   const onContentChange = useCallback(
     (content: unknown[], contentText: string) => {

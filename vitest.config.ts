@@ -15,7 +15,12 @@ export default defineConfig({
       // components/ui = shadcn 生成物 / database.ts = 自動生成
       // EditorDynamic.tsx = next/dynamic(ssr:false) のラッパーのみ。jsdom では動作せず、
       //   実 BlockNote ロジックは持たない。E2E (editor.spec.ts) で結合として覆う。
-      exclude: ['components/ui/**', 'types/database.ts', 'components/editor/EditorDynamic.tsx'],
+      exclude: [
+        'components/ui/**',
+        'types/database.ts',
+        'components/editor/EditorDynamic.tsx',
+        'components/share/SharedEditorDynamic.tsx',
+      ],
       thresholds: { branches: 80, functions: 85, lines: 85, statements: 85 },
     },
   },

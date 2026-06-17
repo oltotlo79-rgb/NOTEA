@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { updatePageMeta } from '@/lib/actions/pages'
 import { displayTitle } from '@/lib/utils/page-display'
+import { ShareDialog } from '@/components/share/ShareDialog'
 
 type PageHeaderProps = {
   pageId: string
@@ -60,12 +61,11 @@ export function PageHeader({ pageId, title: initialTitle, icon: initialIcon, onE
 
   return (
     <div className="px-8 pt-12 pb-4">
-      {/* モバイル専用 AI ボタン（デスクトップでは非表示） */}
-      {aiMenuSlot && (
-        <div className="flex justify-end mb-2 md:hidden">
-          {aiMenuSlot}
-        </div>
-      )}
+      {/* 上部アクション行: 共有ボタン（全幅）＋ モバイル専用 AI ボタン */}
+      <div className="flex justify-end items-center gap-1 mb-2">
+        <ShareDialog pageId={pageId} />
+        {aiMenuSlot && <div className="md:hidden">{aiMenuSlot}</div>}
+      </div>
 
       {/* アイコン */}
       <div className="mb-3">

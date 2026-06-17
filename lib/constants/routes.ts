@@ -9,6 +9,7 @@ export const ROUTES = {
   AUTH_CONFIRM: '/auth/confirm',
   PAGES: '/pages',
   SEARCH: '/search',
+  SHARE: '/share',
   TRASH: '/trash',
   SETTINGS: '/settings',
   SETTINGS_AI: '/settings/ai',

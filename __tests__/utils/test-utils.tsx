@@ -85,6 +85,10 @@ export function createMockSupabaseClient(options: MockSupabaseOptions = {}) {
     data: { path: string; token: string; signedUrl: string } | null
     error: { message: string } | null
   }
+  type StorageSignedUrlResult = {
+    data: { signedUrl: string } | null
+    error: { message: string } | null
+  }
 
   const storageBucketBuilder = {
     list: vi.fn<() => Promise<StorageListResult>>(async () => ({ data: [], error: null })),
@@ -92,6 +96,10 @@ export function createMockSupabaseClient(options: MockSupabaseOptions = {}) {
     upload: vi.fn<() => Promise<StorageUploadResult>>(async () => ({ data: null, error: null })),
     createSignedUploadUrl: vi.fn<() => Promise<StorageSignedUploadResult>>(async () => ({
       data: { path: 'user-1/page-1/uuid.webp', token: 'signed-token', signedUrl: 'https://example.com/upload' },
+      error: null,
+    })),
+    createSignedUrl: vi.fn<() => Promise<StorageSignedUrlResult>>(async () => ({
+      data: { signedUrl: 'https://example.com/signed-view' },
       error: null,
     })),
   }

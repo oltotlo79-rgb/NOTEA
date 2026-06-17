@@ -58,6 +58,41 @@ export type Database = {
         }
         Relationships: []
       }
+      page_shares: {
+        Row: {
+          created_at: string
+          id: string
+          page_id: string
+          permission: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_id: string
+          permission: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_id?: string
+          permission?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_shares_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           content: Json
@@ -148,8 +183,24 @@ export type Database = {
         Returns: number
       }
       count_user_pages: { Args: never; Returns: number }
+      get_shared_page: {
+        Args: { p_token: string }
+        Returns: {
+          content: Json
+          content_text: string
+          icon: string
+          id: string
+          permission: string
+          title: string
+          updated_at: string
+        }[]
+      }
       move_page: {
         Args: { p_new_parent_id: string; p_page_id: string }
+        Returns: undefined
+      }
+      update_shared_page: {
+        Args: { p_content: Json; p_content_text: string; p_token: string }
         Returns: undefined
       }
     }
