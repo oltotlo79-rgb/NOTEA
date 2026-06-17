@@ -122,7 +122,7 @@ export default async function UsageSettingsPage() {
           <p className="text-sm text-muted-foreground">
             上限を増やしたい場合は{' '}
             <Link
-              href={ROUTES.SETTINGS}
+              href={ROUTES.SETTINGS_PLAN}
               className="text-primary underline-offset-2 hover:underline"
             >
               プレミアムプランをご検討ください

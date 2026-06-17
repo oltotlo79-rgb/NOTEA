@@ -155,6 +155,8 @@ export type Database = {
           display_name: string
           id: string
           plan: string
+          plan_current_period_end: string | null
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
@@ -162,6 +164,8 @@ export type Database = {
           display_name: string
           id: string
           plan?: string
+          plan_current_period_end?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -169,7 +173,27 @@ export type Database = {
           display_name?: string
           id?: string
           plan?: string
+          plan_current_period_end?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          type?: string
         }
         Relationships: []
       }

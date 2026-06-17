@@ -17,6 +17,7 @@ export const ROUTES = {
   SETTINGS_USAGE: '/settings/usage',
   SETTINGS_ACCOUNT: '/settings/account',
   SETTINGS_APPEARANCE: '/settings/appearance',
+  SETTINGS_PLAN: '/settings/plan',
   HELP: '/help',
   TERMS: '/terms',
   PRIVACY: '/privacy',

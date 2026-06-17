@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { User, BarChart2, Sun, Sparkles, Trash2 } from 'lucide-react'
+import { User, BarChart2, Sun, Sparkles, Trash2, CreditCard } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ROUTES } from '@/lib/constants/routes'
 
@@ -21,6 +21,12 @@ const SETTING_CARDS = [
     icon: BarChart2,
     title: '使用量',
     description: 'ページ・容量',
+  },
+  {
+    href: ROUTES.SETTINGS_PLAN,
+    icon: CreditCard,
+    title: 'プラン',
+    description: 'アップグレード',
   },
   {
     href: ROUTES.SETTINGS_APPEARANCE,
