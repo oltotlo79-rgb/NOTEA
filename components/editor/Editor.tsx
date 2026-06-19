@@ -10,9 +10,12 @@
 import '@blocknote/react/style.css'
 import { useCallback } from 'react'
 import { BlockNoteViewRaw, useCreateBlockNote, SuggestionMenuController, getDefaultReactSlashMenuItems, FormattingToolbarController } from '@blocknote/react'
-import type { PartialBlock, Block, DefaultBlockSchema, DefaultInlineContentSchema, DefaultStyleSchema } from '@blocknote/core'
-import type { FormattingToolbarProps } from '@blocknote/react'
+import type { PartialBlock } from '@blocknote/core'
+import type { FormattingToolbarProps, DefaultReactSuggestionItem } from '@blocknote/react'
+import { Table } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { editorSchema, DATA_TABLE_TYPE, newDataTableJson } from '@/lib/editor/schema'
+import { parseTable, extractPlainText } from '@/lib/editor/data-table'
 import { createUploadUrl } from '@/lib/actions/images'
 import { compressImage, type CompressError } from '@/lib/images/compress'
 import { ERR_IMAGE_TOO_LARGE } from '@/lib/constants/errors'
@@ -44,26 +47,6 @@ function isCompressError(value: unknown): value is CompressError {
     'kind' in value &&
     typeof value.kind === 'string'
   )
-}
-
-/**
- * ブロック配列からプレーンテキストを抽出する。
- * BlockNote の blocksToMarkdownLossy はサーバーでも動くが、
- * ここではクライアント側のエディタ状態から取得するためブラウザ専用。
- */
-type DefaultEditor = ReturnType<typeof useCreateBlockNote>
-
-function extractText(editor: DefaultEditor): string {
-  try {
-    return editor.document
-      .map((block: Block<DefaultBlockSchema, DefaultInlineContentSchema, DefaultStyleSchema>) =>
-        editor.blocksToMarkdownLossy([block])
-      )
-      .join('\n')
-      .trim()
-  } catch {
-    return ''
-  }
 }
 
 export function Editor({ pageId, initialContent, onContentChange, pageContentText = '', onAskPanelOpen, onToast }: EditorProps) {
@@ -135,6 +118,7 @@ export function Editor({ pageId, initialContent, onContentChange, pageContentTex
 
   const editor = useCreateBlockNote(
     {
+      schema: editorSchema,
       initialContent: initialBlockContent,
       uploadFile,
       resolveFileUrl,
@@ -146,7 +130,22 @@ export function Editor({ pageId, initialContent, onContentChange, pageContentTex
   const handleChange = useCallback(() => {
     // editor.document の型 Block[] は unknown[] に安全に変換できる（ダウングレード）
     const content: unknown[] = editor.document
-    const contentText = extractText(editor)
+    // 標準ブロックは markdown 化、dataTable は列名・セル値を抽出して content_text に含める
+    // （カスタムブロックは blocksToMarkdownLossy で拾えず検索対象から漏れるため）
+    let baseText = ''
+    try {
+      baseText = editor.blocksToMarkdownLossy(editor.document)
+    } catch {
+      baseText = ''
+    }
+    const tableText = editor.document
+      .filter((block) => block.type === DATA_TABLE_TYPE)
+      .map((block) => {
+        const props: Record<string, unknown> = block.props
+        return extractPlainText(parseTable(typeof props.data === 'string' ? props.data : ''))
+      })
+      .join('\n')
+    const contentText = [baseText, tableText].filter(Boolean).join('\n').trim()
     onContentChange(content, contentText)
   }, [editor, onContentChange])
 
@@ -207,7 +206,21 @@ export function Editor({ pageId, initialContent, onContentChange, pageContentTex
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) => {
-            const items = getDefaultReactSlashMenuItems(editor)
+            const dataTableItem: DefaultReactSuggestionItem = {
+              title: 'データベース',
+              subtext: '型付きの表を挿入',
+              aliases: ['table', 'db', '表', 'データベース', 'database'],
+              group: '高度',
+              icon: <Table className="size-4" />,
+              onItemClick: () => {
+                editor.insertBlocks(
+                  [{ type: DATA_TABLE_TYPE, props: { data: newDataTableJson() } }],
+                  editor.getTextCursorPosition().block,
+                  'after'
+                )
+              },
+            }
+            const items = [...getDefaultReactSlashMenuItems(editor), dataTableItem]
             if (!query) return items
             const lowerQuery = query.toLowerCase()
             return items.filter(

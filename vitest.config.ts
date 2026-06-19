@@ -20,6 +20,9 @@ export default defineConfig({
         'types/database.ts',
         'components/editor/EditorDynamic.tsx',
         'components/share/SharedEditorDynamic.tsx',
+        // BlockNote スキーマ構築の glue。jsdom で実 BlockNote を構築できず単体不可。
+        // E2E（table.spec.ts）で結合として覆う。
+        'lib/editor/schema.tsx',
       ],
       thresholds: { branches: 80, functions: 85, lines: 85, statements: 85 },
     },

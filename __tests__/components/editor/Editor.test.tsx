@@ -44,6 +44,14 @@ vi.mock('@blocknote/react', () => {
 
 vi.mock('@blocknote/core', () => ({}))
 
+// editorSchema は実 BlockNote（createReactBlockSpec/BlockNoteSchema）を呼ぶため、
+// モック環境では構築できない。スキーマ自体をスタブして Editor の配線ロジックに集中する。
+vi.mock('@/lib/editor/schema', () => ({
+  editorSchema: {},
+  DATA_TABLE_TYPE: 'dataTable',
+  newDataTableJson: () => '{"columns":[],"rows":[]}',
+}))
+
 // ---- 依存モック ----
 const mockCompressImage = vi.fn()
 const mockCreateUploadUrl = vi.fn()

@@ -15,6 +15,7 @@ import { useCallback } from 'react'
 import { BlockNoteViewRaw, useCreateBlockNote } from '@blocknote/react'
 import type { PartialBlock } from '@blocknote/core'
 import { getSharedImageUrl } from '@/lib/actions/shared-pages'
+import { editorSchema } from '@/lib/editor/schema'
 
 type SharedEditorProps = {
   token: string
@@ -44,6 +45,7 @@ export function SharedEditor({ token, initialContent, editable, onContentChange 
 
   const editor = useCreateBlockNote(
     {
+      schema: editorSchema,
       initialContent: initialBlockContent,
       resolveFileUrl,
       defaultStyles: false,

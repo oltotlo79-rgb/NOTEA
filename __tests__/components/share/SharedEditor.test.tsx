@@ -34,6 +34,8 @@ vi.mock('@blocknote/react', () => ({
 
 vi.mock('@blocknote/core', () => ({}))
 
+vi.mock('@/lib/editor/schema', () => ({ editorSchema: {} }))
+
 const mockGetSharedImageUrl = vi.fn()
 vi.mock('@/lib/actions/shared-pages', () => ({
   getSharedImageUrl: (...args: unknown[]) => mockGetSharedImageUrl(...args),
