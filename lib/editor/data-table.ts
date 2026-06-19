@@ -8,6 +8,9 @@
 export const COLUMN_TYPES = ['text', 'number', 'checkbox', 'select', 'date'] as const
 export type ColumnType = (typeof COLUMN_TYPES)[number]
 
+export const VIEW_TYPES = ['table', 'board', 'calendar'] as const
+export type ViewType = (typeof VIEW_TYPES)[number]
+
 export type CellValue = string | number | boolean | null
 
 export type Column = {
@@ -25,6 +28,12 @@ export type Row = {
 export type DataTable = {
   columns: Column[]
   rows: Row[]
+  /** 表示中のビュー（既定: table） */
+  view?: ViewType
+  /** ボード表示でレーン分けに使う select 列 */
+  boardColumnId?: string
+  /** カレンダー表示で日付の配置に使う date 列 */
+  dateColumnId?: string
 }
 
 export const COLUMN_TYPE_LABEL: Record<ColumnType, string> = {
@@ -34,6 +43,15 @@ export const COLUMN_TYPE_LABEL: Record<ColumnType, string> = {
   select: '選択肢',
   date: '日付',
 }
+
+export const VIEW_LABEL: Record<ViewType, string> = {
+  table: 'テーブル',
+  board: 'ボード',
+  calendar: 'カレンダー',
+}
+
+/** ボード表示の未設定レーンのキー（select 値が空・不一致の行） */
+export const BOARD_UNSET_KEY = '__unset__'
 
 function genId(): string {
   // ブラウザ/jsdom 双方で利用可能。表内の行・列の一意キー用。
@@ -158,6 +176,16 @@ export function addRow(table: DataTable): DataTable {
   return { ...table, rows: [...table.rows, { id: genId(), cells }] }
 }
 
+/** 指定列にプリセット値を入れた行を追加する（ボードのレーン追加・カレンダーの日付追加用） */
+export function addRowWith(table: DataTable, presets: Record<string, CellValue>): DataTable {
+  const cells: Record<string, CellValue> = {}
+  for (const col of table.columns) {
+    const preset = presets[col.id]
+    cells[col.id] = preset !== undefined ? coerceValue(preset, col.type) : defaultCellValue(col.type)
+  }
+  return { ...table, rows: [...table.rows, { id: genId(), cells }] }
+}
+
 export function removeRow(table: DataTable, rowId: string): DataTable {
   return { ...table, rows: table.rows.filter((r) => r.id !== rowId) }
 }
@@ -179,8 +207,65 @@ export function setCell(
   }
 }
 
+export function setView(table: DataTable, view: ViewType): DataTable {
+  return { ...table, view }
+}
+
+export function setBoardColumn(table: DataTable, columnId: string | undefined): DataTable {
+  return { ...table, boardColumnId: columnId }
+}
+
+export function setDateColumn(table: DataTable, columnId: string | undefined): DataTable {
+  return { ...table, dateColumnId: columnId }
+}
+
+export type BoardLane = { key: string; label: string; rows: Row[] }
+
+/**
+ * select 列の値ごとに行をレーン分けする。レーン順は列の options 順 + 末尾に未設定レーン。
+ * columnId が select 列でない場合は未設定レーンのみ返す。
+ */
+export function groupRowsByColumn(table: DataTable, columnId: string): BoardLane[] {
+  const column = table.columns.find((c) => c.id === columnId && c.type === 'select')
+  const options = column?.options ?? []
+  const lanes: BoardLane[] = options.map((opt) => ({ key: opt, label: opt, rows: [] }))
+  const unset: BoardLane = { key: BOARD_UNSET_KEY, label: '未設定', rows: [] }
+
+  for (const row of table.rows) {
+    const value = row.cells[columnId]
+    const lane = typeof value === 'string' ? lanes.find((l) => l.key === value) : undefined
+    if (lane) lane.rows.push(row)
+    else unset.rows.push(row)
+  }
+
+  return [...lanes, unset]
+}
+
+/** date 列の値（YYYY-MM-DD）ごとに行をまとめる。空・不正日付の行は除外。 */
+export function groupRowsByDate(table: DataTable, columnId: string): Map<string, Row[]> {
+  const map = new Map<string, Row[]>()
+  for (const row of table.rows) {
+    const value = row.cells[columnId]
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const list = map.get(value) ?? []
+      list.push(row)
+      map.set(value, list)
+    }
+  }
+  return map
+}
+
+/** 表の「タイトル列」（最初の text 列、無ければ最初の列）の id を返す。カード見出し用。 */
+export function titleColumnId(table: DataTable): string | undefined {
+  return (table.columns.find((c) => c.type === 'text') ?? table.columns[0])?.id
+}
+
 function isColumnType(value: unknown): value is ColumnType {
   return typeof value === 'string' && (COLUMN_TYPES as readonly string[]).includes(value)
+}
+
+function isViewType(value: unknown): value is ViewType {
+  return typeof value === 'string' && (VIEW_TYPES as readonly string[]).includes(value)
 }
 
 function isCellValue(value: unknown): value is CellValue {
@@ -224,7 +309,12 @@ export function parseTable(json: string): DataTable {
     }
 
     if (columns.length === 0) return createEmptyTable()
-    return { columns, rows }
+
+    const result: DataTable = { columns, rows }
+    if (isViewType(obj.view)) result.view = obj.view
+    if (typeof obj.boardColumnId === 'string') result.boardColumnId = obj.boardColumnId
+    if (typeof obj.dateColumnId === 'string') result.dateColumnId = obj.dateColumnId
+    return result
   } catch {
     return createEmptyTable()
   }

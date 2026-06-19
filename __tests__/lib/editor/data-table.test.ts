@@ -7,6 +7,7 @@ import {
   changeColumnType,
   setColumnOptions,
   addRow,
+  addRowWith,
   removeRow,
   setCell,
   coerceValue,
@@ -14,6 +15,13 @@ import {
   parseTable,
   serializeTable,
   extractPlainText,
+  setView,
+  setBoardColumn,
+  setDateColumn,
+  groupRowsByColumn,
+  groupRowsByDate,
+  titleColumnId,
+  BOARD_UNSET_KEY,
 } from '@/lib/editor/data-table'
 
 describe('createEmptyTable', () => {
@@ -180,6 +188,103 @@ describe('parse / serialize', () => {
     expect(t.columns[0]!.id).toBe('c1')
     expect(t.rows[0]!.cells.c1).toBe('hello')
     expect(t.rows[0]!.cells.c2).toBeUndefined()
+  })
+})
+
+describe('ビュー設定', () => {
+  it('setView / setBoardColumn / setDateColumn', () => {
+    let t = createEmptyTable()
+    t = setView(t, 'board')
+    expect(t.view).toBe('board')
+    t = setBoardColumn(t, 'col-x')
+    expect(t.boardColumnId).toBe('col-x')
+    t = setDateColumn(t, 'col-y')
+    expect(t.dateColumnId).toBe('col-y')
+  })
+
+  it('parse/serialize でビュー設定が保持される', () => {
+    let t = createEmptyTable()
+    t = setView(t, 'calendar')
+    t = setDateColumn(t, 'd1')
+    const restored = parseTable(serializeTable(t))
+    expect(restored.view).toBe('calendar')
+    expect(restored.dateColumnId).toBe('d1')
+  })
+
+  it('不正な view 値は無視される', () => {
+    const json = JSON.stringify({
+      columns: [{ id: 'c1', name: 'A', type: 'text' }],
+      rows: [],
+      view: 'bogus',
+    })
+    expect(parseTable(json).view).toBeUndefined()
+  })
+})
+
+describe('groupRowsByColumn（ボード）', () => {
+  it('select 列の options 順にレーン分けし、末尾に未設定レーン', () => {
+    let t = createEmptyTable()
+    t = addColumn(t, 'select', '状態')
+    const colId = t.columns[1]!.id
+    t = setColumnOptions(t, colId, ['未', '済'])
+    // 1行目は未設定のまま、2行目=未、3行目=済
+    t = setCell(t, t.rows[0]!.id, colId, '')
+    t = addRowWith(t, { [colId]: '未' })
+    t = addRowWith(t, { [colId]: '済' })
+
+    const lanes = groupRowsByColumn(t, colId)
+    expect(lanes.map((l) => l.key)).toEqual(['未', '済', BOARD_UNSET_KEY])
+    expect(lanes[0]!.rows).toHaveLength(1)
+    expect(lanes[1]!.rows).toHaveLength(1)
+    expect(lanes[2]!.label).toBe('未設定')
+    expect(lanes[2]!.rows).toHaveLength(1)
+  })
+
+  it('select でない列を指定すると未設定レーンのみ', () => {
+    const t = createEmptyTable()
+    const lanes = groupRowsByColumn(t, t.columns[0]!.id)
+    expect(lanes).toHaveLength(1)
+    expect(lanes[0]!.key).toBe(BOARD_UNSET_KEY)
+  })
+})
+
+describe('groupRowsByDate（カレンダー）', () => {
+  it('日付ごとに行をまとめ、空・不正日付は除外', () => {
+    let t = createEmptyTable()
+    t = addColumn(t, 'date', '期限')
+    const colId = t.columns[1]!.id
+    t = setCell(t, t.rows[0]!.id, colId, '2026-06-19')
+    t = addRowWith(t, { [colId]: '2026-06-19' })
+    t = addRowWith(t, { [colId]: '2026-06-20' })
+    t = addRowWith(t, {}) // 日付なし
+
+    const map = groupRowsByDate(t, colId)
+    expect(map.get('2026-06-19')).toHaveLength(2)
+    expect(map.get('2026-06-20')).toHaveLength(1)
+    expect(map.has('')).toBe(false)
+  })
+})
+
+describe('titleColumnId', () => {
+  it('最初の text 列を返す', () => {
+    let t = createEmptyTable()
+    t = addColumn(t, 'number', '数量')
+    expect(titleColumnId(t)).toBe(t.columns[0]!.id)
+  })
+  it('text 列が無ければ最初の列', () => {
+    let t = createEmptyTable()
+    t = changeColumnType(t, t.columns[0]!.id, 'number')
+    expect(titleColumnId(t)).toBe(t.columns[0]!.id)
+  })
+})
+
+describe('addRowWith', () => {
+  it('プリセット値を型変換して行を追加', () => {
+    let t = createEmptyTable()
+    t = addColumn(t, 'number', '数量')
+    const numId = t.columns[1]!.id
+    t = addRowWith(t, { [numId]: '5' })
+    expect(t.rows[1]!.cells[numId]).toBe(5)
   })
 })
 

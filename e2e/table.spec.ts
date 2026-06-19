@@ -51,6 +51,22 @@ test('表を挿入してセル入力し、リロードしても保持される',
   await expect(page.getByLabel('名前 の入力').first()).toHaveValue(value, { timeout: 10000 })
 })
 
+test('ビューをカレンダーに切り替えられる（日付列が無ければ案内）', async ({ page }) => {
+  await login(page)
+  await createPage(page)
+  await waitForEditorReady(page)
+
+  await insertDataTable(page)
+
+  await page.getByRole('tab', { name: 'カレンダー' }).click()
+  // 既定は日付列が無いので案内が出る
+  await expect(page.getByText(/「日付」型の列が必要/)).toBeVisible({ timeout: 8000 })
+
+  // テーブルに戻れる
+  await page.getByRole('tab', { name: 'テーブル' }).click()
+  await expect(page.getByRole('button', { name: '行を追加' })).toBeVisible({ timeout: 8000 })
+})
+
 test('表の内容が検索でヒットする', async ({ page }) => {
   await login(page)
   await createPage(page)
